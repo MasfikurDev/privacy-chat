@@ -64,7 +64,7 @@ export function Home(p: HomeProps) {
       </p>
 
       {!p.name && (
-        <section class='card'>
+        <section class='card home-name'>
           <h2>Pick a display name</h2>
           <p class='muted'>This is what people see when you contact them. You can change it any time.</p>
           <form
@@ -87,7 +87,7 @@ export function Home(p: HomeProps) {
         </section>
       )}
 
-      <section class='card'>
+      <section class='card home-connect'>
         <h2>Message or call someone</h2>
         <p class='muted'>Enter their ID. They need to have the app open to receive your request.</p>
         <form
@@ -111,7 +111,7 @@ export function Home(p: HomeProps) {
         </form>
       </section>
 
-      <section class='card'>
+      <section class='card home-invite'>
         <h2>No ID? Share a link</h2>
         <p class='muted'>Create a private room and send the link through any app. It works once you both open it.</p>
         <button class='ghost' onClick={p.onInvite}>
@@ -159,15 +159,15 @@ export function Contacts(p: ContactsProps) {
       <section class='card'>
         <h2>Contacts</h2>
         {sorted.length === 0 && <p class='muted'>No contacts yet. Add one below, or save someone after you chat.</p>}
-        <ul class='list'>
+        <ul class='list contacts-list'>
           {sorted.map((c) => (
-            <li key={c.id}>
+            <li class='contact-item' key={c.id}>
               <Avatar id={c.id} label={label(c)} />
               <div class='grow'>
                 <strong>{label(c)}</strong>
                 <span class='muted mono'>{formatId(c.id)}</span>
               </div>
-              <div class='row'>
+              <div class='row contact-actions'>
                 <button disabled={p.busy} onClick={() => p.onMessage(c.id)}>
                   Message
                 </button>
@@ -186,7 +186,7 @@ export function Contacts(p: ContactsProps) {
         </ul>
       </section>
 
-      <section class='card'>
+      <section class='card contacts-add'>
         <h2>Add a contact</h2>
         <form class='stack' onSubmit={add}>
           <input
@@ -292,7 +292,7 @@ export function Profile(p: ProfileProps) {
     <>
       <IdCard identity={p.identity} name={p.name} />
 
-      <section class='card'>
+      <section class='card profile-name'>
         <h2>Display name</h2>
         <form class='row' onSubmit={save}>
           <input
@@ -307,7 +307,7 @@ export function Profile(p: ProfileProps) {
         </form>
       </section>
 
-      <section class='card'>
+      <section class='card profile-privacy'>
         <h2>Privacy</h2>
         <Toggle
           label='Appear online'
@@ -327,7 +327,7 @@ export function Profile(p: ProfileProps) {
         />
       </section>
 
-      <section class='card'>
+      <section class='card profile-backup'>
         <h2>Backup</h2>
         <p class='muted'>
           Your ID lives in this browser. Save a backup file to restore it elsewhere. The file contains your private

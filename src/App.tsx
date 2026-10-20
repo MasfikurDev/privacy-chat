@@ -298,7 +298,7 @@ export function App() {
         </div>
       )}
 
-      <main class='page'>
+      <main class={`page page-${screen}`}>
         {screen === 'home' && (
           <Home
             identity={identity}
