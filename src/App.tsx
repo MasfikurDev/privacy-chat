@@ -1,221 +1,370 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
-import { createSecret, openSession, type ReceivedFile, type Session } from './room';
+import { Chat } from './Chat';
+import { formatId, importBackup, loadIdentity, normalizeId, resetIdentity, type Identity } from './identity';
+import { dial, listenInbox, type Peer } from './inbox';
+import { Contacts, Help, Home, Profile, type Pending } from './pages';
+import { createSecret } from './room';
+import {
+  cleanName,
+  getBlocked,
+  getContacts,
+  getName,
+  getOnline,
+  getRelayOnly,
+  removeContact,
+  setBlocked,
+  setName,
+  setOnline,
+  setRelayOnly,
+  upsertContact,
+  type Contact
+} from './store';
 
-interface Msg { mine: boolean; text: string }
+type Screen = 'home' | 'contacts' | 'profile' | 'help';
 
-const secretFromHash = () => location.hash.slice(1);
+const TABS: [Screen, string][] = [
+  ['home', 'Home'],
+  ['contacts', 'Contacts'],
+  ['profile', 'Profile'],
+  ['help', 'Help']
+];
+
+let nextKey = 1;
 const errText = (e: unknown) => (e instanceof Error ? e.message : String(e));
-const kb = (n: number) => (n >= 1048576 ? `${(n / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`);
 
 export function App() {
-  const [secret, setSecret] = useState(secretFromHash());
-  const [relayOnly, setRelayOnly] = useState(false);
-  const [peers, setPeers] = useState(0);
-  const [msgs, setMsgs] = useState<Msg[]>([]);
-  const [draft, setDraft] = useState('');
-  const [copied, setCopied] = useState(false);
-  const [debug, setDebug] = useState<string[]>([]);
-  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
-  const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
-  const [callError, setCallError] = useState('');
-  const [files, setFiles] = useState<ReceivedFile[]>([]);
-  const [sendPct, setSendPct] = useState<number | null>(null);
-  const [fileError, setFileError] = useState('');
-  const localVideo = useRef<HTMLVideoElement>(null);
-  const remoteVideo = useRef<HTMLVideoElement>(null);
-  const session = useRef<Session | null>(null);
+  const initial = location.hash.slice(1);
+  const [identity, setIdentity] = useState<Identity | null>(null);
+  const [setupError, setSetupError] = useState('');
+  const [screen, setScreen] = useState<Screen>('home');
+  const [chat, setChat] = useState<{ secret: string; peer?: Peer } | null>(initial ? { secret: initial } : null);
+  const [name, setNameState] = useState(getName());
+  const [contacts, setContacts] = useState<Contact[]>(getContacts());
+  const [blocked, setBlockedIds] = useState<string[]>(getBlocked());
+  const [online, setOnlineState] = useState(getOnline());
+  const [relayOnly, setRelayOnlyState] = useState(getRelayOnly());
+  const [requests, setRequests] = useState<Pending[]>([]);
+  const [dialing, setDialing] = useState<{ id: string; status: string } | null>(null);
+  const [notice, setNotice] = useState('');
+  const dialRef = useRef<{ cancel: () => void } | null>(null);
+  const chatRef = useRef(chat);
+  chatRef.current = chat;
 
-  const addDebug = (line: string) =>
-    setDebug((d) => {
-      if (d[d.length - 1]?.endsWith(line)) return d;
-      const next = [...d, `${new Date().toISOString().slice(11, 19)} ${line}`];
-      // Keep the first 3 lines (build, room id, WebRTC support) pinned.
-      return next.length > 40 ? [...next.slice(0, 3), ...next.slice(-37)] : next;
+  const refresh = () => {
+    setContacts(getContacts());
+    setBlockedIds(getBlocked());
+  };
+  const labelFor = (id: string) => {
+    const c = contacts.find((x) => x.id === id);
+    return c?.nickname || c?.name || formatId(id);
+  };
+  const rememberPeer = (peer: Peer) => {
+    const existing = getContacts().find((c) => c.id === peer.id);
+    if (existing) {
+      upsertContact({ ...existing, name: peer.name, pub: peer.pub });
+      refresh();
+    }
+  };
+  const saveContact = (peer: Peer) => {
+    const existing = getContacts().find((c) => c.id === peer.id);
+    upsertContact({
+      id: peer.id,
+      name: peer.name,
+      nickname: existing?.nickname ?? '',
+      pub: peer.pub,
+      addedAt: existing?.addedAt ?? Date.now()
     });
+    refresh();
+  };
+  const openChat = (secret: string, peer?: Peer) => {
+    location.hash = secret;
+    setChat({ secret, peer });
+  };
+  const leaveChat = () => {
+    history.replaceState(null, '', location.pathname + location.search);
+    setChat(null);
+  };
 
   useEffect(() => {
-    const onErr = (e: ErrorEvent) => addDebug(`error: ${e.message}`);
-    const onRej = (e: PromiseRejectionEvent) => addDebug(`unhandled: ${String(e.reason)}`);
-    window.addEventListener('error', onErr);
-    window.addEventListener('unhandledrejection', onRej);
-    return () => {
-      window.removeEventListener('error', onErr);
-      window.removeEventListener('unhandledrejection', onRej);
-    };
+    loadIdentity()
+      .then(setIdentity)
+      .catch((e) => setSetupError(errText(e)));
   }, []);
 
+  // Listen for incoming requests while the app is open and online.
   useEffect(() => {
-    if (localVideo.current) localVideo.current.srcObject = localStream;
-  }, [localStream]);
-  useEffect(() => {
-    if (remoteVideo.current) remoteVideo.current.srcObject = remoteStream;
-  }, [remoteStream]);
-
-  useEffect(() => {
-    if (!secret) return;
+    if (!identity || !online) return;
+    let stop: (() => void) | null = null;
     let cancelled = false;
-    openSession(secret, relayOnly, {
-      onPeerCount: setPeers,
-      onMessage: (text) => setMsgs((m) => [...m, { mine: false, text }]),
-      onDebug: addDebug,
-      onRemoteStream: setRemoteStream,
-      onFile: (f) => setFiles((l) => [...l, f])
-    }).then((s) => {
-      if (cancelled) s.leave();
-      else session.current = s;
-    }).catch((e) => addDebug(`openSession failed: ${errText(e)}`));
+    listenInbox(identity, relayOnly, (req) => {
+      if (getBlocked().includes(req.peer.id)) {
+        req.decline();
+        return;
+      }
+      const known = getContacts().some((c) => c.id === req.peer.id);
+      if (known && !chatRef.current) {
+        const secret = req.accept();
+        if (secret) {
+          rememberPeer(req.peer);
+          openChat(secret, req.peer);
+        }
+        return;
+      }
+      const item: Pending = { key: nextKey++, req };
+      setRequests((r) => [...r, item]);
+      setTimeout(() => setRequests((r) => r.filter((x) => x !== item)), 120000);
+    })
+      .then((s) => {
+        if (cancelled) s();
+        else stop = s;
+      })
+      .catch((e) => setNotice(`Could not start listening: ${errText(e)}`));
     return () => {
       cancelled = true;
-      session.current?.leave();
-      session.current = null;
-      setPeers(0);
-      setLocalStream(null);
-      setRemoteStream(null);
+      stop?.();
     };
-  }, [secret, relayOnly]);
+  }, [identity, online, relayOnly]);
 
-  const startRoom = () => {
-    const s = createSecret();
-    location.hash = s;
-    setSecret(s);
+  const startDial = (raw: string) => {
+    setNotice('');
+    if (!identity || dialing) return;
+    const id = normalizeId(raw);
+    if (!id) {
+      setNotice('That ID does not look right. It has 16 letters and numbers, like K7QM-4TXD-9HWP-2ZRB.');
+      return;
+    }
+    if (id === identity.id) {
+      setNotice('That is your own ID.');
+      return;
+    }
+    if (getBlocked().includes(id)) {
+      setNotice('You blocked this ID. Unblock it in Contacts first.');
+      return;
+    }
+    setDialing({ id, status: 'Starting…' });
+    const d = dial(identity, id, relayOnly, (status) => setDialing({ id, status }));
+    dialRef.current = d;
+    d.promise
+      .then(({ secret, peer }) => {
+        setDialing(null);
+        rememberPeer(peer);
+        openChat(secret, peer);
+      })
+      .catch((e) => {
+        setDialing(null);
+        const msg = errText(e);
+        if (msg !== 'Cancelled') setNotice(msg);
+      });
   };
 
-  const copyLink = async () => {
-    await navigator.clipboard.writeText(location.href);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
+  const dropRequest = (p: Pending) => setRequests((r) => r.filter((x) => x !== p));
+  const acceptRequest = (p: Pending, save: boolean) => {
+    const secret = p.req.accept();
+    dropRequest(p);
+    if (!secret) {
+      setNotice('That request expired.');
+      return;
+    }
+    if (save) saveContact(p.req.peer);
+    else rememberPeer(p.req.peer);
+    openChat(secret, p.req.peer);
+  };
+  const declineRequest = (p: Pending) => {
+    p.req.decline();
+    dropRequest(p);
+  };
+  const blockRequest = (p: Pending) => {
+    setBlocked(p.req.peer.id, true);
+    refresh();
+    declineRequest(p);
   };
 
-  const send = (e: Event) => {
-    e.preventDefault();
-    const text = draft.trim();
-    if (!text || peers === 0) return;
-    session.current?.send(text);
-    setMsgs((m) => [...m, { mine: true, text }]);
-    setDraft('');
+  const addContact = (rawId: string, nickname: string): string => {
+    const id = normalizeId(rawId);
+    if (!id) return 'That ID does not look right. It has 16 letters and numbers.';
+    if (identity && id === identity.id) return 'That is your own ID.';
+    const existing = getContacts().find((c) => c.id === id);
+    upsertContact({
+      id,
+      name: existing?.name ?? '',
+      nickname: cleanName(nickname),
+      pub: existing?.pub,
+      addedAt: existing?.addedAt ?? Date.now()
+    });
+    refresh();
+    return '';
+  };
+  const renameContact = (id: string, nickname: string) => {
+    const existing = getContacts().find((c) => c.id === id);
+    if (existing) {
+      upsertContact({ ...existing, nickname: cleanName(nickname) });
+      refresh();
+    }
   };
 
-  const startCall = async (video: boolean) => {
-    setCallError('');
+  const importIdentity = async (json: string) => {
     try {
-      const stream = await session.current?.startCall(video);
-      if (stream) setLocalStream(stream);
+      setIdentity(await importBackup(json));
+      setNotice('Identity restored from backup.');
     } catch (e) {
-      setCallError(errText(e));
+      setNotice(errText(e));
     }
   };
-
-  const endCall = () => {
-    session.current?.endCall();
-    setLocalStream(null);
-    setRemoteStream(null);
+  const newIdentity = () => {
+    resetIdentity()
+      .then(setIdentity)
+      .catch((e) => setNotice(errText(e)));
   };
 
-  const onPickFile = async (e: Event) => {
-    const input = e.target as HTMLInputElement;
-    const file = input.files?.[0];
-    input.value = '';
-    if (!file || !session.current) return;
-    setFileError('');
-    setSendPct(0);
-    try {
-      await session.current.sendFile(file, (p) => setSendPct(Math.round(p * 100)));
-      setMsgs((m) => [...m, { mine: true, text: `Sent file: ${file.name}` }]);
-    } catch (err) {
-      setFileError(errText(err));
-    } finally {
-      setSendPct(null);
-    }
-  };
-
-  if (!secret) {
+  if (chat) {
+    const peer = chat.peer;
+    const saved = !!peer && contacts.some((c) => c.id === peer.id);
     return (
-      <main>
-        <h1>Privacy Chat</h1>
-        <p>Private one-to-one chat straight between two devices.</p>
-        <button onClick={startRoom}>Start a private room</button>
-      </main>
+      <div class='app'>
+        <Chat
+          key={chat.secret}
+          secret={chat.secret}
+          peer={peer}
+          relayOnly={relayOnly}
+          saved={saved}
+          onSave={() => peer && saveContact(peer)}
+          onLeave={leaveChat}
+        />
+      </div>
+    );
+  }
+
+  if (setupError) {
+    return (
+      <div class='app'>
+        <main class='page'>
+          <section class='card'>
+            <h2>Could not set up your ID</h2>
+            <p class='error' role='alert'>
+              {setupError}
+            </p>
+            <p class='muted'>This app needs a modern browser over HTTPS with storage enabled.</p>
+          </section>
+        </main>
+      </div>
+    );
+  }
+
+  if (!identity) {
+    return (
+      <div class='app'>
+        <main class='page'>
+          <p role='status'>Setting up your private ID…</p>
+        </main>
+      </div>
     );
   }
 
   return (
-    <main>
-      <h1>Privacy Chat</h1>
-      <p role="status">
-        {peers === 0 && 'Waiting for the other person to open the link…'}
-        {peers === 1 && 'Connected directly.'}
-        {peers > 1 && 'This room is full. Only the first person can chat.'}
-      </p>
-      <p>
-        <button onClick={copyLink}>{copied ? 'Link copied' : 'Copy invite link'}</button>{' '}
-        <label>
-          <input
-            type="checkbox"
-            checked={relayOnly}
-            onChange={(e) => setRelayOnly((e.target as HTMLInputElement).checked)}
-          />{' '}
-          Hide my IP (relay only)
-        </label>
-      </p>
+    <div class='app'>
+      <header class='top'>
+        <h1>Privacy Chat</h1>
+        <p class='muted'>Peer to peer. No accounts.</p>
+      </header>
 
-      <p class="calls">
-        <button onClick={() => startCall(false)} disabled={peers === 0 || !!localStream}>Voice call</button>
-        <button onClick={() => startCall(true)} disabled={peers === 0 || !!localStream}>Video call</button>
-        <button onClick={endCall} disabled={!localStream && !remoteStream}>End call</button>
-      </p>
-      {remoteStream && !localStream && (
-        <p role="status">The other person started a call. Join with Voice call or Video call.</p>
+      {dialing && (
+        <div class='banner' role='status'>
+          <span>
+            {dialing.status} ({labelFor(dialing.id)})
+          </span>
+          <button class='ghost' onClick={() => dialRef.current?.cancel()}>
+            Cancel
+          </button>
+        </div>
       )}
-      {callError && <p role="alert">{callError}</p>}
-      <div class="videos">
-        <video ref={remoteVideo} autoPlay playsInline hidden={!remoteStream} />
-        <video ref={localVideo} class="self" autoPlay playsInline muted hidden={!localStream} />
-      </div>
+      {notice && (
+        <div class='banner error' role='alert'>
+          <span>{notice}</span>
+          <button class='ghost' onClick={() => setNotice('')}>
+            Dismiss
+          </button>
+        </div>
+      )}
 
-      <ul class="msgs" aria-live="polite">
-        {msgs.map((m, i) => (
-          <li class={m.mine ? 'mine' : 'theirs'} key={i}>{m.text}</li>
+      <main class='page'>
+        {screen === 'home' && (
+          <Home
+            identity={identity}
+            name={name}
+            online={online}
+            busy={!!dialing}
+            requests={requests}
+            onName={(n) => {
+              setName(n);
+              setNameState(getName());
+            }}
+            onDial={startDial}
+            onInvite={() => openChat(createSecret())}
+            onAccept={acceptRequest}
+            onDecline={declineRequest}
+            onBlock={blockRequest}
+          />
+        )}
+        {screen === 'contacts' && (
+          <Contacts
+            contacts={contacts}
+            blocked={blocked}
+            busy={!!dialing}
+            onMessage={startDial}
+            onAdd={addContact}
+            onRename={renameContact}
+            onRemove={(id) => {
+              removeContact(id);
+              refresh();
+            }}
+            onBlock={(id) => {
+              setBlocked(id, true);
+              refresh();
+            }}
+            onUnblock={(id) => {
+              setBlocked(id, false);
+              refresh();
+            }}
+          />
+        )}
+        {screen === 'profile' && (
+          <Profile
+            identity={identity}
+            name={name}
+            online={online}
+            relayOnly={relayOnly}
+            onName={(n) => {
+              setName(n);
+              setNameState(getName());
+            }}
+            onOnline={(v) => {
+              setOnline(v);
+              setOnlineState(v);
+            }}
+            onRelayOnly={(v) => {
+              setRelayOnly(v);
+              setRelayOnlyState(v);
+            }}
+            onImport={importIdentity}
+            onReset={newIdentity}
+          />
+        )}
+        {screen === 'help' && <Help />}
+      </main>
+
+      <nav class='tabs' aria-label='Main'>
+        {TABS.map(([key, text]) => (
+          <button
+            key={key}
+            class={screen === key ? 'tab active' : 'tab'}
+            aria-current={screen === key ? 'page' : undefined}
+            onClick={() => setScreen(key)}
+          >
+            {text}
+            {key === 'home' && requests.length > 0 ? ` (${requests.length})` : ''}
+          </button>
         ))}
-      </ul>
-      <form onSubmit={send}>
-        <input
-          value={draft}
-          onInput={(e) => setDraft((e.target as HTMLInputElement).value)}
-          placeholder="Type a message"
-          maxLength={4000}
-          aria-label="Message"
-        />
-        <button disabled={peers === 0}>Send</button>
-      </form>
-
-      <p>
-        <label>
-          Send a file (up to 50 MB){' '}
-          <input type="file" onChange={onPickFile} disabled={peers === 0 || sendPct !== null} />
-        </label>
-      </p>
-      {sendPct !== null && <progress value={sendPct} max={100} aria-label="Upload progress" />}
-      {fileError && <p role="alert">{fileError}</p>}
-      {files.length > 0 && (
-        <ul class="files">
-          {files.map((f, i) => (
-            <li key={i}>
-              {f.verified ? (
-                <a href={f.url} download={f.name}>{f.name}</a>
-              ) : (
-                <span>{f.name} (failed integrity check, discarded)</span>
-              )}{' '}
-              ({kb(f.size)})
-            </li>
-          ))}
-        </ul>
-      )}
-
-      <details>
-        <summary>Debug info</summary>
-        <button type="button" onClick={() => navigator.clipboard.writeText(debug.join('\n'))}>Copy debug</button>
-        <pre id="debug">{debug.join('\n')}</pre>
-      </details>
-    </main>
+      </nav>
+    </div>
   );
 }
