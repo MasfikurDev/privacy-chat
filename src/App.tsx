@@ -3,6 +3,7 @@ import { Chat } from './Chat';
 import { formatId, importBackup, loadIdentity, normalizeId, resetIdentity, type Identity } from './identity';
 import { dial, listenInbox, type Peer } from './inbox';
 import { Contacts, Help, Home, Profile, type Pending } from './pages';
+import { RequestDialog } from './RequestDialog';
 import { createSecret } from './room';
 import {
   cleanName,
@@ -216,6 +217,16 @@ export function App() {
       .catch((e) => setNotice(errText(e)));
   };
 
+  const requestDialog = (inChat: boolean) => (
+    <RequestDialog
+      requests={requests}
+      inChat={inChat}
+      onAccept={acceptRequest}
+      onDecline={declineRequest}
+      onBlock={blockRequest}
+    />
+  );
+
   if (chat) {
     const peer = chat.peer;
     const saved = !!peer && contacts.some((c) => c.id === peer.id);
@@ -230,6 +241,7 @@ export function App() {
           onSave={() => peer && saveContact(peer)}
           onLeave={leaveChat}
         />
+        {requestDialog(true)}
       </div>
     );
   }
@@ -293,16 +305,12 @@ export function App() {
             name={name}
             online={online}
             busy={!!dialing}
-            requests={requests}
             onName={(n) => {
               setName(n);
               setNameState(getName());
             }}
             onDial={startDial}
             onInvite={() => openChat(createSecret())}
-            onAccept={acceptRequest}
-            onDecline={declineRequest}
-            onBlock={blockRequest}
           />
         )}
         {screen === 'contacts' && (
@@ -361,10 +369,10 @@ export function App() {
             onClick={() => setScreen(key)}
           >
             {text}
-            {key === 'home' && requests.length > 0 ? ` (${requests.length})` : ''}
           </button>
         ))}
       </nav>
+      {requestDialog(false)}
     </div>
   );
 }

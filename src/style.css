@@ -137,4 +137,36 @@ video[hidden] { display: none; }
 progress { width: 100%; accent-color: var(--accent); }
 .files { padding-left: 1.2rem; margin: 0.4rem 0; }
 .debug { margin-top: 0.5rem; }
+
+dialog.modal {
+  width: min(24rem, calc(100vw - 2rem));
+  max-height: calc(100dvh - 2rem);
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+}
+dialog.modal[open] { animation: modal-in 0.18s ease-out; }
+dialog.modal::backdrop { background: rgba(5, 12, 11, 0.55); backdrop-filter: blur(4px); }
+.modal-body { display: flex; flex-direction: column; gap: 0.35rem; padding: 1.5rem 1.25rem 1.25rem; }
+.modal-body.center { align-items: center; text-align: center; }
+.modal-body h2 { margin: 0; font-size: 1.4rem; }
+.modal-body p { margin: 0; }
+.modal-actions { display: flex; gap: 0.6rem; justify-content: center; width: 100%; margin-top: 1rem; }
+.modal-actions > button { flex: 1; }
+.modal-actions.stacked { flex-direction: column; }
+.modal-actions .split { flex-wrap: nowrap; }
+.modal-actions .split > button { flex: 1; }
+button.accept { background: var(--ok); border-color: var(--ok); color: #fff; }
+.avatar-lg { width: 4.5rem; height: 4.5rem; font-size: 1.8rem; }
+.ring { position: relative; display: inline-grid; margin-bottom: 0.5rem; border-radius: 50%; }
+.ring::after { content: ''; position: absolute; inset: -6px; border-radius: 50%; border: 2px solid var(--accent); animation: ring-pulse 1.6s ease-out infinite; }
+p.banner { margin: 0; }
+@keyframes modal-in { from { opacity: 0; transform: translateY(8px) scale(0.98); } }
+@keyframes ring-pulse { from { opacity: 0.9; transform: scale(1); } to { opacity: 0; transform: scale(1.35); } }
+@media (prefers-reduced-motion: reduce) {
+  dialog.modal[open], .ring::after { animation: none; }
+}
 pre#debug { font: 0.72rem/1.4 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; max-height: 14rem; overflow-y: auto; border: 1px solid var(--line); border-radius: 10px; padding: 0.5rem; background: var(--surface); }
