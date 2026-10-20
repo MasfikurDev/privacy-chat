@@ -191,9 +191,6 @@ button.accept { background: var(--ok); border-color: var(--ok); color: #fff; }
 p.banner { margin: 0; }
 @keyframes modal-in { from { opacity: 0; transform: translateY(8px) scale(0.98); } }
 @keyframes ring-pulse { from { opacity: 0.9; transform: scale(1); } to { opacity: 0; transform: scale(1.35); } }
-@media (prefers-reduced-motion: reduce) {
-  dialog.modal[open], .ring::after { animation: none; }
-}
 pre#debug { font: 0.72rem/1.4 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; max-height: 14rem; overflow-y: auto; border: 1px solid var(--line); border-radius: 10px; padding: 0.5rem; background: var(--surface); }
 
 @media (min-width: 48rem) {
@@ -322,6 +319,321 @@ pre#debug { font: 0.72rem/1.4 var(--mono); white-space: pre-wrap; overflow-wrap:
     .calls button:last-child { grid-column: 1 / -1; }
     .file-transfer label { align-items: flex-start; flex-direction: column; }
   }
-  @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
-  }
+@media (prefers-reduced-motion: reduce) {
+  dialog.modal[open], .ring::after { animation: none; }
+  *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
+}
+
+/* ==========================================================================
+   Chat and list rework.
+   These rules are appended after the base rules so they win without editing
+   them. The block above (chat-head, msgs, composer, calls) is intentionally
+   at the top level, not inside the min-width: 48rem query, and the
+   max-width: 40rem query overrides it on small screens.
+   ========================================================================== */
+
+/* --- utilities ---------------------------------------------------------- */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+/* --- chat layout: pinned composer, scrolling message list ---------------- */
+.app-chat {
+  height: 100dvh;
+  overflow-y: auto;
+}
+.app-chat .chat {
+  min-height: 0;
+}
+.chat > .chat-head,
+.chat > .invite,
+.chat > .call-bar,
+.chat > .videos,
+.chat > .file-transfer,
+.chat > .files,
+.chat > .debug,
+.chat > .composer,
+.chat > .banner,
+.chat > .muted,
+.chat > .error {
+  flex: none;
+}
+
+.msgs-wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: min(30vh, 12rem);
+}
+.msgs.msgs-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.jump-latest {
+  position: absolute;
+  left: 50%;
+  bottom: 0.75rem;
+  transform: translateX(-50%);
+  z-index: 5;
+  min-height: 2.5rem;
+  padding: 0.35rem 0.85rem;
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  font-size: 0.84rem;
+}
+
+/* --- message bubbles ----------------------------------------------------- */
+.msgs .msg {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+.msgs .msg-time {
+  font-size: 0.68rem;
+  opacity: 0.7;
+}
+.msgs .theirs .msg-time {
+  color: var(--muted);
+}
+.msgs .mine .msg-time {
+  color: var(--accent-ink);
+}
+.msgs .msg-day {
+  align-self: center;
+  max-width: none;
+  padding: 0.15rem 0.65rem;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
+  color: var(--muted);
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  box-shadow: none;
+}
+
+/* --- composer ------------------------------------------------------------ */
+.composer {
+  flex: none;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+.composer-tools {
+  flex: none;
+  display: flex;
+  align-items: center;
+}
+.composer-attach {
+  min-height: 2.75rem;
+  width: 2.75rem;
+  padding: 0;
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  box-shadow: none;
+}
+.composer-attach:hover:not(:disabled) {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.composer-field {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+}
+.composer-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 3rem;
+  max-height: 9rem;
+  padding: 0.7rem 0.2rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  line-height: 1.45;
+  resize: vertical;
+}
+.composer-input:focus {
+  outline: none;
+  border: 0;
+  box-shadow: none;
+}
+.composer-send {
+  flex: none;
+  min-width: 5rem;
+}
+.composer-count {
+  flex: none;
+  font-size: 0.72rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  opacity: 0;
+  transition: opacity 140ms ease;
+}
+.composer:focus-within .composer-count {
+  opacity: 1;
+}
+
+/* --- call bar ------------------------------------------------------------ */
+.call-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  width: fit-content;
+  max-width: 100%;
+  padding: 0.3rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+}
+.call-bar > button:not(.call-tool) {
+  min-height: 2.6rem;
+}
+.call-tool {
+  min-height: 2.75rem;
+  width: 2.75rem;
+  padding: 0;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 1px solid transparent;
+  box-shadow: none;
+}
+.call-tool[aria-pressed='true'] {
+  background: color-mix(in srgb, var(--danger) 18%, var(--surface));
+  color: var(--danger);
+  border-color: var(--danger);
+}
+.call-timer {
+  font-family: var(--mono);
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  padding-inline: 0.25rem;
+}
+.peer-media {
+  font-size: 0.82rem;
+  color: var(--muted);
+  padding-inline: 0.25rem;
+}
+
+/* --- received files ------------------------------------------------------ */
+.file-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: 10px;
+}
+.file-item a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--accent);
+}
+.file-item-failed {
+  color: var(--danger);
+  border: 1px dashed color-mix(in srgb, var(--danger) 45%, transparent);
+}
+
+/* The attach button now lives in the composer, so this element only holds
+   the visually hidden file input. */
+.file-transfer {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+/* --- contacts / profile / home ------------------------------------------ */
+.contact-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.contact-primary {
+  flex: none;
+}
+.contact-secondary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+.contact-secondary button {
+  min-height: 2.5rem;
+  padding: 0.35rem 0.7rem;
+  font-size: 0.88rem;
+}
+
+.toggle-control {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 3rem;
+  min-height: 3rem;
+  margin: -0.4rem;
+}
+.toggle-switch {
+  width: 1.6rem;
+  height: 1.6rem;
+  accent-color: var(--accent);
+}
+.toggle[data-on='true'] .toggle-switch {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.id-card-inner,
+.contacts-add-inner,
+.profile-name-inner,
+.home-name-inner,
+.home-connect-inner {
+  max-width: 32rem;
+}
+.id-card-actions,
+.profile-backup-actions {
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.screen {
+  min-width: 0;
+  outline-offset: 0.35rem;
+}
+
+/* --- install banner ------------------------------------------------------
+   src/install.tsx adds `has-install` to <body> while the banner is visible.
+   The banner is position:fixed above the tab bar, so the page needs room or
+   its content ends up underneath it. */
+body.has-install .app:not(.app-chat) {
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 8.5rem);
+}
