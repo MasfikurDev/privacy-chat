@@ -1,8 +1,7 @@
 import * as nostr from 'trystero/nostr';
 import * as torrent from 'trystero/torrent';
-import { joinRoom as joinMqtt } from 'trystero/mqtt';
 import { instrumentRtc, rtcSummary } from './rtcdebug';
-import { APP_ID, MAX_FILE_BYTES, MAX_MESSAGE_LENGTH, NOSTR_RELAYS, buildRtcConfig } from './config';
+import { APP_ID, MAX_FILE_BYTES, MAX_MESSAGE_LENGTH, buildRtcConfig, SIGNALING_STRATEGIES } from './config';
 
 type Join = typeof nostr.joinRoom;
 type Room = ReturnType<Join>;
@@ -50,6 +49,11 @@ export interface ReceivedFile {
   verified: boolean;
 }
 
+export interface PeerMediaState {
+  muted: boolean;
+  cameraOff: boolean;
+}
+
 export interface Handlers {
   onPeerCount: (count: number) => void;
   onMessage: (text: string) => void;
@@ -57,6 +61,7 @@ export interface Handlers {
   onRemoteStream: (stream: MediaStream | null) => void;
   onFile: (file: ReceivedFile) => void;
   onCallEnded?: () => void;
+  onPeerMediaState?: (state: PeerMediaState) => void;
 }
 
 export interface Session {
@@ -65,6 +70,7 @@ export interface Session {
   endCall: () => void;
   declineCall: () => void;
   sendFile: (file: File, onProgress: (fraction: number) => void) => Promise<void>;
+  setMediaState: (state: PeerMediaState) => void;
   leave: () => void;
 }
 
@@ -74,12 +80,6 @@ interface Route {
   ctl: (t: string) => void;
   file: (data: ArrayBuffer, meta: FileMeta, onProgress: (fraction: number) => void) => Promise<unknown>;
 }
-
-const strategies: { name: string; join: Join; extra: object }[] = [
-  { name: 'nostr', join: nostr.joinRoom, extra: { relayUrls: NOSTR_RELAYS, relayRedundancy: 5 } },
-  { name: 'torrent', join: torrent.joinRoom as unknown as Join, extra: {} },
-  { name: 'mqtt', join: joinMqtt as unknown as Join, extra: {} }
-];
 
 function openCount(name: string, fn: () => unknown): string {
   try {
@@ -116,6 +116,8 @@ export async function openSession(
   let activePeer: string | null = null;
   let localStream: MediaStream | null = null;
   let callRoute: Route | null = null;
+  let peerMedia: PeerMediaState = { muted: false, cameraOff: false };
+  let lastSentMedia: PeerMediaState = { muted: false, cameraOff: false };
   const report = () => handlers.onPeerCount(routes.size);
   const activeRoute = (): Route | undefined =>
     activePeer ? routes.get(activePeer)?.values().next().value : undefined;
@@ -140,7 +142,7 @@ export async function openSession(
     handlers.onFile({ name, size: bytes.byteLength, url: URL.createObjectURL(blob), verified: true });
   }
 
-  const rooms = strategies.map((s) => {
+  const rooms = SIGNALING_STRATEGIES.map((s) => {
     const config = { appId: APP_ID, password, rtcConfig: buildRtcConfig(relayOnly), ...s.extra };
     const room = s.join(config as Parameters<Join>[0], roomId);
     const [sendChat, onChat] = room.makeAction<string>('chat');
@@ -174,9 +176,33 @@ export async function openSession(
       handlers.onMessage(data.slice(0, MAX_MESSAGE_LENGTH));
     });
     onCtl((msg, id) => {
-      if (id === activePeer && msg === 'call-end') {
+      if (id !== activePeer) return;
+      if (msg === 'call-end') {
         handlers.onRemoteStream(null);
         handlers.onCallEnded?.();
+        peerMedia = { muted: false, cameraOff: false };
+        handlers.onPeerMediaState?.({ ...peerMedia });
+        return;
+      }
+      if (msg === 'mute:on') {
+        peerMedia = { ...peerMedia, muted: true };
+        handlers.onPeerMediaState?.({ ...peerMedia });
+        return;
+      }
+      if (msg === 'mute:off') {
+        peerMedia = { ...peerMedia, muted: false };
+        handlers.onPeerMediaState?.({ ...peerMedia });
+        return;
+      }
+      if (msg === 'cam:on') {
+        peerMedia = { ...peerMedia, cameraOff: false };
+        handlers.onPeerMediaState?.({ ...peerMedia });
+        return;
+      }
+      if (msg === 'cam:off') {
+        peerMedia = { ...peerMedia, cameraOff: true };
+        handlers.onPeerMediaState?.({ ...peerMedia });
+        return;
       }
     });
     onFile((data, id, meta) => {
@@ -230,6 +256,19 @@ export async function openSession(
       const buf = await file.arrayBuffer();
       const hash = toHex(new Uint8Array(await crypto.subtle.digest('SHA-256', buf)));
       await route.file(buf, { name: file.name, size: file.size, hash }, onProgress);
+    },
+    setMediaState: (state) => {
+      if (!activePeer) return;
+      const route = activeRoute();
+      if (!route) return;
+      if (state.muted !== lastSentMedia.muted) {
+        route.ctl(state.muted ? 'mute:on' : 'mute:off');
+        lastSentMedia = { ...lastSentMedia, muted: state.muted };
+      }
+      if (state.cameraOff !== lastSentMedia.cameraOff) {
+        route.ctl(state.cameraOff ? 'cam:off' : 'cam:on');
+        lastSentMedia = { ...lastSentMedia, cameraOff: state.cameraOff };
+      }
     },
     leave: () => {
       endCall();

@@ -29,3 +29,23 @@ test('home and contacts adapt to wide and narrow layouts', async ({ page }) => {
   expect(layout.contentWidth).toBeLessThanOrEqual(layout.viewportWidth);
   expect(layout.actionButtonHeight).toBeGreaterThanOrEqual(44);
 });
+
+test('chat room keeps its composer and message canvas usable on mobile', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  await expect(page.locator('.id-code')).toBeVisible();
+  await page.getByRole('button', { name: 'Create invite link' }).click();
+
+  await expect(page.getByRole('button', { name: 'Copy invite link' })).toBeVisible();
+  await expect(page.getByText('Your conversation starts here')).toBeVisible();
+  await expect(page.getByRole('textbox', { name: 'Message' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Send', exact: true })).toBeVisible();
+
+  const layout = await page.evaluate(() => ({
+    viewportWidth: document.documentElement.clientWidth,
+    contentWidth: document.documentElement.scrollWidth,
+    composerWidth: document.querySelector('.composer')?.getBoundingClientRect().width ?? 0
+  }));
+  expect(layout.contentWidth).toBeLessThanOrEqual(layout.viewportWidth);
+  expect(layout.composerWidth).toBeGreaterThan(300);
+});

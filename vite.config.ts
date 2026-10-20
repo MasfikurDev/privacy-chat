@@ -23,8 +23,8 @@ export default defineConfig({
         display_override: ['standalone', 'minimal-ui'],
         orientation: 'any',
         prefer_related_applications: false,
-        background_color: '#f5f3ee',
-        theme_color: '#0f6b63',
+        background_color: '#f2f5f1',
+        theme_color: '#176b55',
         categories: ['social', 'communication'],
         icons: [
           { src: '/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },

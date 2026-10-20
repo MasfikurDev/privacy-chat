@@ -60,6 +60,16 @@ export function InstallBanner() {
     };
   }, []);
 
+  const visible = !installed && !hidden && !inChat && (promptEvent !== null || isIos());
+
+  useEffect(() => {
+    if (visible) document.body.classList.add('has-install');
+    else document.body.classList.remove('has-install');
+    return () => {
+      document.body.classList.remove('has-install');
+    };
+  }, [visible]);
+
   if (installed || hidden || inChat) return null;
 
   const dismiss = () => {

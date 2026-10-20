@@ -231,7 +231,7 @@ export function App() {
     const peer = chat.peer;
     const saved = !!peer && contacts.some((c) => c.id === peer.id);
     return (
-      <div class='app'>
+      <div class='app app-chat'>
         <Chat
           key={chat.secret}
           secret={chat.secret}

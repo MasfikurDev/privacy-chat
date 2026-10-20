@@ -3,7 +3,7 @@ import { HAS_TURN } from './config';
 import { exportBackup, formatId, type Identity } from './identity';
 import type { IncomingRequest } from './inbox';
 import type { Contact } from './store';
-import { Avatar } from './ui';
+import { Avatar, Icon } from './ui';
 
 export interface Pending {
   key: number;
@@ -28,16 +28,25 @@ function IdCard({ identity, name }: { identity: Identity; name: string }) {
   };
   return (
     <section class='card id-card'>
-      <p class='eyebrow'>Your ID</p>
-      <p class='id-code'>{text}</p>
-      <p class='muted'>{name ? `People see you as ${name}.` : 'Set a display name so people know it is you.'}</p>
-      <div class='row'>
-        <button onClick={copy}>{copied ? 'Copied' : 'Copy ID'}</button>
-        {'share' in navigator && (
-          <button class='ghost' onClick={share}>
-            Share
+      <div class='id-card-inner'>
+        <p class='eyebrow'>Your ID</p>
+        <p class='id-code'>{text}</p>
+        <p class='muted'>{name ? `People see you as ${name}.` : 'Set a display name so people know it is you.'}</p>
+        <div class='row id-card-actions'>
+          <button class='id-copy' onClick={copy}>
+            {copied && (
+              <>
+                <Icon name='check' size={16} />{' '}
+              </>
+            )}
+            {copied ? 'Copied' : 'Copy ID'}
           </button>
-        )}
+          {'share' in navigator && (
+            <button class='ghost' onClick={share}>
+              Share
+            </button>
+          )}
+        </div>
       </div>
     </section>
   );
@@ -67,48 +76,52 @@ export function Home(p: HomeProps) {
         <section class='card home-name'>
           <h2>Pick a display name</h2>
           <p class='muted'>This is what people see when you contact them. You can change it any time.</p>
-          <form
-            class='row'
-            onSubmit={(e) => {
-              e.preventDefault();
-              p.onName(draftName);
-            }}
-          >
-            <input
-              class='grow'
-              value={draftName}
-              onInput={(e) => setDraftName((e.target as HTMLInputElement).value)}
-              placeholder='Your name'
-              maxLength={32}
-              aria-label='Display name'
-            />
-            <button>Save</button>
-          </form>
+          <div class='home-name-inner'>
+            <form
+              class='row'
+              onSubmit={(e) => {
+                e.preventDefault();
+                p.onName(draftName);
+              }}
+            >
+              <input
+                class='grow'
+                value={draftName}
+                onInput={(e) => setDraftName((e.target as HTMLInputElement).value)}
+                placeholder='Your name'
+                maxLength={32}
+                aria-label='Display name'
+              />
+              <button>Save</button>
+            </form>
+          </div>
         </section>
       )}
 
       <section class='card home-connect'>
         <h2>Message or call someone</h2>
         <p class='muted'>Enter their ID. They need to have the app open to receive your request.</p>
-        <form
-          class='row'
-          onSubmit={(e) => {
-            e.preventDefault();
-            p.onDial(target);
-          }}
-        >
-          <input
-            class='grow mono'
-            value={target}
-            onInput={(e) => setTarget((e.target as HTMLInputElement).value)}
-            placeholder='XXXX-XXXX-XXXX-XXXX'
-            aria-label='Their ID'
-            autocapitalize='characters'
-            autocomplete='off'
-            spellcheck={false}
-          />
-          <button disabled={p.busy}>Connect</button>
-        </form>
+        <div class='home-connect-inner'>
+          <form
+            class='row'
+            onSubmit={(e) => {
+              e.preventDefault();
+              p.onDial(target);
+            }}
+          >
+            <input
+              class='grow mono'
+              value={target}
+              onInput={(e) => setTarget((e.target as HTMLInputElement).value)}
+              placeholder='XXXX-XXXX-XXXX-XXXX'
+              aria-label='Their ID'
+              autocapitalize='characters'
+              autocomplete='off'
+              spellcheck={false}
+            />
+            <button disabled={p.busy}>Connect</button>
+          </form>
+        </div>
       </section>
 
       <section class='card home-invite'>
@@ -163,23 +176,26 @@ export function Contacts(p: ContactsProps) {
           {sorted.map((c) => (
             <li class='contact-item' key={c.id}>
               <Avatar id={c.id} label={label(c)} />
-              <div class='grow'>
+              <div class='contact-info grow'>
                 <strong>{label(c)}</strong>
                 <span class='muted mono'>{formatId(c.id)}</span>
               </div>
               <div class='row contact-actions'>
-                <button disabled={p.busy} onClick={() => p.onMessage(c.id)}>
+                <button class='contact-primary' disabled={p.busy} onClick={() => p.onMessage(c.id)}>
+                  <Icon name='send' size={16} />{' '}
                   Message
                 </button>
-                <button class='ghost' onClick={() => rename(c)}>
-                  Rename
-                </button>
-                <button class='ghost' onClick={() => p.onRemove(c.id)}>
-                  Remove
-                </button>
-                <button class='danger' onClick={() => p.onBlock(c.id)}>
-                  Block
-                </button>
+                <div class='row contact-secondary' role='group' aria-label={`More actions for ${label(c)}`}>
+                  <button class='ghost' onClick={() => rename(c)}>
+                    Rename
+                  </button>
+                  <button class='ghost' onClick={() => p.onRemove(c.id)}>
+                    Remove
+                  </button>
+                  <button class='danger' onClick={() => p.onBlock(c.id)}>
+                    Block
+                  </button>
+                </div>
               </div>
             </li>
           ))}
@@ -188,31 +204,33 @@ export function Contacts(p: ContactsProps) {
 
       <section class='card contacts-add'>
         <h2>Add a contact</h2>
-        <form class='stack' onSubmit={add}>
-          <input
-            class='mono'
-            value={rawId}
-            onInput={(e) => setRawId((e.target as HTMLInputElement).value)}
-            placeholder='XXXX-XXXX-XXXX-XXXX'
-            aria-label='Contact ID'
-            autocapitalize='characters'
-            autocomplete='off'
-            spellcheck={false}
-          />
-          <input
-            value={nick}
-            onInput={(e) => setNick((e.target as HTMLInputElement).value)}
-            placeholder='Nickname (optional)'
-            maxLength={32}
-            aria-label='Nickname'
-          />
-          <button>Add contact</button>
-        </form>
-        {error && (
-          <p class='error' role='alert'>
-            {error}
-          </p>
-        )}
+        <div class='contacts-add-inner'>
+          <form class='stack' onSubmit={add}>
+            <input
+              class='mono'
+              value={rawId}
+              onInput={(e) => setRawId((e.target as HTMLInputElement).value)}
+              placeholder='XXXX-XXXX-XXXX-XXXX'
+              aria-label='Contact ID'
+              autocapitalize='characters'
+              autocomplete='off'
+              spellcheck={false}
+            />
+            <input
+              value={nick}
+              onInput={(e) => setNick((e.target as HTMLInputElement).value)}
+              placeholder='Nickname (optional)'
+              maxLength={32}
+              aria-label='Nickname'
+            />
+            <button>Add contact</button>
+          </form>
+          {error && (
+            <p class='error' role='alert'>
+              {error}
+            </p>
+          )}
+        </div>
       </section>
 
       {p.blocked.length > 0 && (
@@ -236,12 +254,20 @@ export function Contacts(p: ContactsProps) {
 
 function Toggle(p: { label: string; hint: string; checked: boolean; onChange: (v: boolean) => void }) {
   return (
-    <label class='toggle'>
-      <span class='grow'>
+    <label class='toggle' data-on={p.checked ? 'true' : 'false'}>
+      <span class='grow toggle-text'>
         <strong>{p.label}</strong>
         <span class='muted'>{p.hint}</span>
       </span>
-      <input type='checkbox' checked={p.checked} onChange={(e) => p.onChange((e.target as HTMLInputElement).checked)} />
+      <span class='toggle-control'>
+        <input
+          class='toggle-switch'
+          type='checkbox'
+          checked={p.checked}
+          data-on={p.checked ? 'true' : 'false'}
+          onChange={(e) => p.onChange((e.target as HTMLInputElement).checked)}
+        />
+      </span>
     </label>
   );
 }
@@ -294,17 +320,19 @@ export function Profile(p: ProfileProps) {
 
       <section class='card profile-name'>
         <h2>Display name</h2>
-        <form class='row' onSubmit={save}>
-          <input
-            class='grow'
-            value={draft}
-            onInput={(e) => setDraft((e.target as HTMLInputElement).value)}
-            placeholder='Your name'
-            maxLength={32}
-            aria-label='Display name'
-          />
-          <button>{saved ? 'Saved' : 'Save'}</button>
-        </form>
+        <div class='profile-name-inner'>
+          <form class='row' onSubmit={save}>
+            <input
+              class='grow'
+              value={draft}
+              onInput={(e) => setDraft((e.target as HTMLInputElement).value)}
+              placeholder='Your name'
+              maxLength={32}
+              aria-label='Display name'
+            />
+            <button>{saved ? 'Saved' : 'Save'}</button>
+          </form>
+        </div>
       </section>
 
       <section class='card profile-privacy'>
@@ -333,8 +361,9 @@ export function Profile(p: ProfileProps) {
           Your ID lives in this browser. Save a backup file to restore it elsewhere. The file contains your private
           key, so keep it secret.
         </p>
-        <div class='row'>
+        <div class='row profile-backup-actions'>
           <button class='ghost' onClick={download}>
+            <Icon name='download' size={16} />{' '}
             Export backup
           </button>
           <label class='file-btn'>
@@ -342,6 +371,7 @@ export function Profile(p: ProfileProps) {
             <input type='file' accept='application/json,.json' onChange={onFile} />
           </label>
           <button class='danger' onClick={reset}>
+            <Icon name='alert' size={16} />{' '}
             New ID
           </button>
         </div>

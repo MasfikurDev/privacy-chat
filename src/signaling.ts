@@ -1,7 +1,5 @@
 import * as nostr from 'trystero/nostr';
-import * as torrent from 'trystero/torrent';
-import { joinRoom as joinMqtt } from 'trystero/mqtt';
-import { APP_ID, NOSTR_RELAYS, buildRtcConfig } from './config';
+import { APP_ID, buildRtcConfig, SIGNALING_STRATEGIES } from './config';
 
 type Join = typeof nostr.joinRoom;
 
@@ -26,12 +24,6 @@ export function randomChallenge(): string {
   return b64url(crypto.getRandomValues(new Uint8Array(16)));
 }
 
-const strategies: { name: string; join: Join; extra: object }[] = [
-  { name: 'nostr', join: nostr.joinRoom, extra: { relayUrls: NOSTR_RELAYS, relayRedundancy: 5 } },
-  { name: 'torrent', join: torrent.joinRoom as unknown as Join, extra: {} },
-  { name: 'mqtt', join: joinMqtt as unknown as Join, extra: {} }
-];
-
 export interface Mesh {
   send: (peer: string, text: string) => void;
   leave: () => void;
@@ -54,7 +46,7 @@ export async function joinMesh(seed: string, relayOnly: boolean, h: MeshHandlers
   ]);
   const senders = new Map<string, Map<string, (t: string) => void>>();
 
-  const rooms = strategies.map((s) => {
+  const rooms = SIGNALING_STRATEGIES.map((s) => {
     const config = { appId: APP_ID, password, rtcConfig: buildRtcConfig(relayOnly), ...s.extra };
     const room = s.join(config as Parameters<Join>[0], roomId);
     const [sendMsg, onMsg] = room.makeAction<string>('inbox');
