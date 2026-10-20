@@ -56,12 +56,14 @@ export interface Handlers {
   onDebug: (line: string) => void;
   onRemoteStream: (stream: MediaStream | null) => void;
   onFile: (file: ReceivedFile) => void;
+  onCallEnded?: () => void;
 }
 
 export interface Session {
   send: (text: string) => void;
   startCall: (video: boolean) => Promise<MediaStream>;
   endCall: () => void;
+  declineCall: () => void;
   sendFile: (file: File, onProgress: (fraction: number) => void) => Promise<void>;
   leave: () => void;
 }
@@ -172,7 +174,10 @@ export async function openSession(
       handlers.onMessage(data.slice(0, MAX_MESSAGE_LENGTH));
     });
     onCtl((msg, id) => {
-      if (id === activePeer && msg === 'call-end') handlers.onRemoteStream(null);
+      if (id === activePeer && msg === 'call-end') {
+        handlers.onRemoteStream(null);
+        handlers.onCallEnded?.();
+      }
     });
     onFile((data, id, meta) => {
       if (id !== activePeer) return;
@@ -217,6 +222,7 @@ export async function openSession(
       return stream;
     },
     endCall,
+    declineCall: () => activeRoute()?.ctl('call-end'),
     sendFile: async (file, onProgress) => {
       if (file.size > MAX_FILE_BYTES) throw new Error('File is too large (limit 50 MB)');
       const route = activeRoute();

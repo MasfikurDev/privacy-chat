@@ -48,13 +48,9 @@ interface HomeProps {
   name: string;
   online: boolean;
   busy: boolean;
-  requests: Pending[];
   onName: (n: string) => void;
   onDial: (raw: string) => void;
   onInvite: () => void;
-  onAccept: (p: Pending, save: boolean) => void;
-  onDecline: (p: Pending) => void;
-  onBlock: (p: Pending) => void;
 }
 
 export function Home(p: HomeProps) {
@@ -88,35 +84,6 @@ export function Home(p: HomeProps) {
             />
             <button>Save</button>
           </form>
-        </section>
-      )}
-
-      {p.requests.length > 0 && (
-        <section class='card' aria-live='polite'>
-          <h2>Requests</h2>
-          <ul class='list'>
-            {p.requests.map((r) => (
-              <li key={r.key}>
-                <Avatar id={r.req.peer.id} label={r.req.peer.name} />
-                <div class='grow'>
-                  <strong>{r.req.peer.name || 'Unnamed'}</strong>
-                  <span class='muted mono'>{formatId(r.req.peer.id)}</span>
-                </div>
-                <div class='row'>
-                  <button onClick={() => p.onAccept(r, true)}>Accept and save</button>
-                  <button class='ghost' onClick={() => p.onAccept(r, false)}>
-                    Accept once
-                  </button>
-                  <button class='ghost' onClick={() => p.onDecline(r)}>
-                    Decline
-                  </button>
-                  <button class='danger' onClick={() => p.onBlock(r)}>
-                    Block
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
         </section>
       )}
 

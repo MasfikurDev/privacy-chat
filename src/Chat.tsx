@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import type { Peer } from './inbox';
 import { openSession, type ReceivedFile, type Session } from './room';
 import { HAS_TURN } from './config';
+import { Avatar, Modal, useRingtone } from './ui';
 
 const SLOW_CONNECT_MS = 25000;
 
@@ -82,7 +83,12 @@ export function Chat({ secret, peer, relayOnly, saved, onSave, onLeave }: ChatPr
       onMessage: (text) => setMsgs((m) => [...m, { mine: false, text }]),
       onDebug: addDebug,
       onRemoteStream: setRemoteStream,
-      onFile: (f) => setFiles((l) => [...l, f])
+      onFile: (f) => setFiles((l) => [...l, f]),
+      onCallEnded: () => {
+        session.current?.endCall();
+        setLocalStream(null);
+        setRemoteStream(null);
+      }
     })
       .then((s) => {
         if (cancelled) s.leave();
@@ -129,6 +135,17 @@ export function Chat({ secret, peer, relayOnly, saved, onSave, onLeave }: ChatPr
     setLocalStream(null);
     setRemoteStream(null);
   };
+
+  const declineCall = () => {
+    session.current?.declineCall();
+    setRemoteStream(null);
+  };
+
+  const incoming = !!remoteStream && !localStream;
+  const incomingVideo = !!remoteStream && remoteStream.getVideoTracks().length > 0;
+  const calling = !!localStream && !remoteStream;
+  const peerName = peer?.name || 'Someone';
+  useRingtone(incoming);
 
   const onPickFile = async (e: Event) => {
     const input = e.target as HTMLInputElement;
@@ -197,9 +214,38 @@ export function Chat({ secret, peer, relayOnly, saved, onSave, onLeave }: ChatPr
           End call
         </button>
       </p>
-      {remoteStream && !localStream && (
-        <p role='status'>The other person started a call. Join with Voice call or Video call.</p>
+      {calling && (
+        <p class='banner' role='status'>
+          <span>Calling {peerName}…</span>
+          <button class='danger' onClick={endCall}>
+            Cancel
+          </button>
+        </p>
       )}
+      <Modal open={incoming} labelId='call-title' descId='call-desc' onCancel={declineCall}>
+        <div class='modal-body center'>
+          <span class='ring'>
+            <Avatar id={peer?.id ?? secret} label={peerName} size='lg' />
+          </span>
+          <p class='eyebrow' id='call-desc'>
+            Incoming {incomingVideo ? 'video' : 'voice'} call
+          </p>
+          <h2 id='call-title'>{peerName}</h2>
+          <div class='modal-actions'>
+            <button class='danger' onClick={declineCall}>
+              Decline
+            </button>
+            {incomingVideo && (
+              <button class='ghost' onClick={() => startCall(false)}>
+                Audio only
+              </button>
+            )}
+            <button class='accept' onClick={() => startCall(incomingVideo)} autoFocus>
+              Accept
+            </button>
+          </div>
+        </div>
+      </Modal>
       {callError && (
         <p role='alert' class='error'>
           {callError}
