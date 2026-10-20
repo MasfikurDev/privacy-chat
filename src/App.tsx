@@ -30,6 +30,45 @@ const TABS: [Screen, string][] = [
   ['help', 'Help']
 ];
 
+const SCREEN_TITLES: Record<Screen, string> = {
+  home: 'Home',
+  contacts: 'Contacts',
+  profile: 'Profile',
+  help: 'Help'
+};
+
+function ScreenAnnouncer({ screen }: { screen: Screen }) {
+  const [announced, setAnnounced] = useState('');
+  const previous = useRef<Screen | null>(null);
+  useEffect(() => {
+    if (previous.current === null) {
+      previous.current = screen;
+      return;
+    }
+    if (screen !== previous.current) {
+      previous.current = screen;
+      setAnnounced(SCREEN_TITLES[screen]);
+    }
+  }, [screen]);
+  return (
+    <div
+      aria-live='polite'
+      role='status'
+      style={{
+        position: 'absolute',
+        width: '1px',
+        height: '1px',
+        overflow: 'hidden',
+        clip: 'rect(0,0,0,0)',
+        clipPath: 'inset(50%)',
+        whiteSpace: 'nowrap'
+      }}
+    >
+      {announced}
+    </div>
+  );
+}
+
 let nextKey = 1;
 const errText = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
@@ -44,12 +83,16 @@ export function App() {
   const [blocked, setBlockedIds] = useState<string[]>(getBlocked());
   const [online, setOnlineState] = useState(getOnline());
   const [relayOnly, setRelayOnlyState] = useState(getRelayOnly());
+  const [notice, setNotice] = useState('');
   const [requests, setRequests] = useState<Pending[]>([]);
   const [dialing, setDialing] = useState<{ id: string; status: string } | null>(null);
-  const [notice, setNotice] = useState('');
   const dialRef = useRef<{ cancel: () => void } | null>(null);
   const chatRef = useRef(chat);
   chatRef.current = chat;
+  const screenContentRef = useRef<HTMLDivElement>(null);
+  const hasFocusedRef = useRef(false);
+
+  const title = SCREEN_TITLES[screen];
 
   const refresh = () => {
     setContacts(getContacts());
@@ -126,6 +169,15 @@ export function App() {
     };
   }, [identity, online, relayOnly]);
 
+  // Move focus into the new view on screen change; never on the first render.
+  useEffect(() => {
+    if (hasFocusedRef.current) {
+      screenContentRef.current?.focus();
+    } else {
+      hasFocusedRef.current = true;
+    }
+  }, [screen]);
+
   const startDial = (raw: string) => {
     setNotice('');
     if (!identity || dialing) return;
@@ -142,7 +194,7 @@ export function App() {
       setNotice('You blocked this ID. Unblock it in Contacts first.');
       return;
     }
-    setDialing({ id, status: 'Starting…' });
+    setDialing({ id, status: 'Starting�' });
     const d = dial(identity, id, relayOnly, (status) => setDialing({ id, status }));
     dialRef.current = d;
     d.promise
@@ -266,7 +318,7 @@ export function App() {
     return (
       <div class='app'>
         <main class='page'>
-          <p role='status'>Setting up your private ID…</p>
+          <p role='status'>Setting up your private ID�</p>
         </main>
       </div>
     );
@@ -278,6 +330,7 @@ export function App() {
         <h1>Privacy Chat</h1>
         <p class='muted'>Peer to peer. No accounts.</p>
       </header>
+      <ScreenAnnouncer screen={screen} />
 
       {dialing && (
         <div class='banner' role='status'>
@@ -299,65 +352,67 @@ export function App() {
       )}
 
       <main class={`page page-${screen}`}>
-        {screen === 'home' && (
-          <Home
-            identity={identity}
-            name={name}
-            online={online}
-            busy={!!dialing}
-            onName={(n) => {
-              setName(n);
-              setNameState(getName());
-            }}
-            onDial={startDial}
-            onInvite={() => openChat(createSecret())}
-          />
-        )}
-        {screen === 'contacts' && (
-          <Contacts
-            contacts={contacts}
-            blocked={blocked}
-            busy={!!dialing}
-            onMessage={startDial}
-            onAdd={addContact}
-            onRename={renameContact}
-            onRemove={(id) => {
-              removeContact(id);
-              refresh();
-            }}
-            onBlock={(id) => {
-              setBlocked(id, true);
-              refresh();
-            }}
-            onUnblock={(id) => {
-              setBlocked(id, false);
-              refresh();
-            }}
-          />
-        )}
-        {screen === 'profile' && (
-          <Profile
-            identity={identity}
-            name={name}
-            online={online}
-            relayOnly={relayOnly}
-            onName={(n) => {
-              setName(n);
-              setNameState(getName());
-            }}
-            onOnline={(v) => {
-              setOnline(v);
-              setOnlineState(v);
-            }}
-            onRelayOnly={(v) => {
-              setRelayOnly(v);
-              setRelayOnlyState(v);
-            }}
-            onImport={importIdentity}
-            onReset={newIdentity}
-          />
-        )}
-        {screen === 'help' && <Help />}
+        <div class='screen' tabIndex={-1} aria-label={title} ref={screenContentRef}>
+          {screen === 'home' && (
+            <Home
+              identity={identity}
+              name={name}
+              online={online}
+              busy={!!dialing}
+              onName={(n) => {
+                setName(n);
+                setNameState(getName());
+              }}
+              onDial={startDial}
+              onInvite={() => openChat(createSecret())}
+            />
+          )}
+          {screen === 'contacts' && (
+            <Contacts
+              contacts={contacts}
+              blocked={blocked}
+              busy={!!dialing}
+              onMessage={startDial}
+              onAdd={addContact}
+              onRename={renameContact}
+              onRemove={(id) => {
+                removeContact(id);
+                refresh();
+              }}
+              onBlock={(id) => {
+                setBlocked(id, true);
+                refresh();
+              }}
+              onUnblock={(id) => {
+                setBlocked(id, false);
+                refresh();
+              }}
+            />
+          )}
+          {screen === 'profile' && (
+            <Profile
+              identity={identity}
+              name={name}
+              online={online}
+              relayOnly={relayOnly}
+              onName={(n) => {
+                setName(n);
+                setNameState(getName());
+              }}
+              onOnline={(v) => {
+                setOnline(v);
+                setOnlineState(v);
+              }}
+              onRelayOnly={(v) => {
+                setRelayOnly(v);
+                setRelayOnlyState(v);
+              }}
+              onImport={importIdentity}
+              onReset={newIdentity}
+            />
+          )}
+          {screen === 'help' && <Help />}
+        </div>
       </main>
 
       <nav class='tabs' aria-label='Main'>
