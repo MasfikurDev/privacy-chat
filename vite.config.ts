@@ -7,15 +7,22 @@ export default defineConfig({
     preact(),
     VitePWA({
       registerType: 'autoUpdate',
+      injectRegister: 'script',
       includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
+      devOptions: { enabled: true, navigateFallback: 'index.html', suppressWarnings: true },
       manifest: {
         id: '/',
         name: 'Privacy Chat',
         short_name: 'PChat',
         description: 'Private peer-to-peer chat, calls and file sharing.',
+        lang: 'en',
+        dir: 'ltr',
         start_url: '/',
         scope: '/',
         display: 'standalone',
+        display_override: ['standalone', 'minimal-ui'],
+        orientation: 'any',
+        prefer_related_applications: false,
         background_color: '#f5f3ee',
         theme_color: '#0f6b63',
         categories: ['social', 'communication'],
@@ -25,7 +32,13 @@ export default defineConfig({
           { src: '/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' }
         ]
       },
-      workbox: { globPatterns: ['**/*.{js,css,html,png,svg}'], cleanupOutdatedCaches: true }
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,png,svg,webmanifest}'],
+        cleanupOutdatedCaches: true,
+        clientsClaim: true,
+        skipWaiting: true,
+        navigateFallback: '/index.html'
+      }
     })
   ],
   build: { target: 'es2022', sourcemap: false }
