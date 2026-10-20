@@ -17,46 +17,45 @@ export function RequestDialog({ requests, inChat, onAccept, onDecline, onBlock }
   const name = current?.req.peer.name || 'Someone';
 
   return (
-    <Modal
-      open={!!current}
-      labelId='req-title'
-      descId='req-desc'
-      onCancel={() => current && onDecline(current)}
-    >
+    <Modal open={!!current} onCancel={() => current && onDecline(current)}>
       {current && (
-        <div class='modal-body center'>
-          <span class='ring'>
-            <Avatar id={current.req.peer.id} label={name} size='lg' />
-          </span>
-          <p class='eyebrow'>New request</p>
-          <h2 id='req-title'>{name}</h2>
-          <p class='muted mono'>{formatId(current.req.peer.id)}</p>
-          <p class='muted' id='req-desc'>
-            Wants to message or call you. They are not in your contacts.
-            {inChat && ' Accepting will leave your current chat.'}
-          </p>
-          <div class='modal-actions stacked'>
-            <button onClick={() => onAccept(current, true)} autoFocus>
+        <>
+          <div slot='headline' id='req-title'>
+            {name}
+          </div>
+          <div slot='content' class='modal-body center'>
+            <span class='ring'>
+              <Avatar id={current.req.peer.id} label={name} size='lg' />
+            </span>
+            <p class='eyebrow'>New request</p>
+            <p class='muted mono'>{formatId(current.req.peer.id)}</p>
+            <p class='muted' id='req-desc'>
+              Wants to message or call you. They are not in your contacts.
+              {inChat && ' Accepting will leave your current chat.'}
+            </p>
+            {waiting > 0 && (
+              <p class='muted'>
+                {waiting} more {waiting === 1 ? 'request' : 'requests'} waiting
+              </p>
+            )}
+          </div>
+          <div slot='actions' class='modal-actions stacked'>
+            <md-filled-button onClick={() => onAccept(current, true)}>
               Accept and save contact
-            </button>
-            <button class='ghost' onClick={() => onAccept(current, false)}>
+            </md-filled-button>
+            <md-outlined-button onClick={() => onAccept(current, false)}>
               Accept once
-            </button>
+            </md-outlined-button>
             <div class='row split'>
-              <button class='ghost' onClick={() => onDecline(current)}>
+              <md-text-button onClick={() => onDecline(current)}>
                 Decline
-              </button>
-              <button class='danger' onClick={() => onBlock(current)}>
+              </md-text-button>
+              <md-text-button class='btn-danger' onClick={() => onBlock(current)}>
                 Block
-              </button>
+              </md-text-button>
             </div>
           </div>
-          {waiting > 0 && (
-            <p class='muted'>
-              {waiting} more {waiting === 1 ? 'request' : 'requests'} waiting
-            </p>
-          )}
-        </div>
+        </>
       )}
     </Modal>
   );

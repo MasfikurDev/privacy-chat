@@ -22,35 +22,52 @@ export function Avatar({ id, label, size }: { id: string; label: string; size?: 
 
 interface ModalProps {
   open: boolean;
-  labelId: string;
-  descId?: string;
   onCancel: () => void;
   children: ComponentChildren;
 }
 
-/** Native modal dialog: traps focus, closes on Escape (via onCancel), and blocks the page behind it. */
-export function Modal({ open, labelId, descId, onCancel, children }: ModalProps) {
-  const ref = useRef<HTMLDialogElement>(null);
+/**
+ * Material dialog: traps focus, blocks the page behind it and reports Escape
+ * or scrim clicks through `onCancel`. The app owns the open state, so the
+ * dialog is only closed once the caller stops asking for it.
+ */
+export function Modal({ open, onCancel, children }: ModalProps) {
+  const ref = useRef<HTMLElement & { open: boolean }>(null);
+  const cancelRef = useRef(onCancel);
+  cancelRef.current = onCancel;
+
   useEffect(() => {
-    const d = ref.current;
-    if (!d) return;
-    if (open && !d.open) d.showModal();
-    else if (!open && d.open) d.close();
+    const el = ref.current;
+    if (!el) return;
+    const handleCancel = (event: Event) => {
+      event.preventDefault();
+      cancelRef.current();
+    };
+    el.addEventListener('cancel', handleCancel);
+    return () => el.removeEventListener('cancel', handleCancel);
+  }, []);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (open && !el.open) el.open = true;
+    else if (!open && el.open) el.open = false;
   }, [open]);
+
   return (
-    <dialog
-      ref={ref}
-      class='modal'
-      aria-labelledby={labelId}
-      aria-describedby={descId}
-      onCancel={(e) => {
-        e.preventDefault();
-        onCancel();
-      }}
-    >
-      {open && children}
-    </dialog>
+    <md-dialog ref={ref} class='modal'>
+      {children}
+    </md-dialog>
   );
+}
+
+/**
+ * Material Web buttons render their own `<button>` inside a shadow root, so
+ * they cannot submit an outer `<form>`. This submits the closest form.
+ */
+export function submitForm(event: Event) {
+  const host = event.currentTarget as HTMLElement | null;
+  host?.closest('form')?.requestSubmit();
 }
 
 /** Plays a soft repeating two-tone ring and vibrates while `active` is true. */
@@ -101,7 +118,8 @@ export type IconName =
   | 'check'
   | 'download'
   | 'alert'
-  | 'down';
+  | 'down'
+  | 'back';
 
 const ICON_PATHS: Record<IconName, string> = {
   mic: 'M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3zM19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8',
@@ -117,9 +135,20 @@ const ICON_PATHS: Record<IconName, string> = {
   download: 'M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3',
   alert: 'M10.29 3.86L1.82 18a2 2 0 0 1 1.71 3h16.94a2 2 0 0 1 1.71-3L13.71 3.86a2 2 0 0 1-3.42 0zM12 9v4M12 17h.01',
   down: 'M6 9l6 6 6-6',
+  back: 'M19 12H5M12 19l-7-7 7-7',
 };
 
-export function Icon({ name, size = 20, label }: { name: IconName; size?: number; label?: string }) {
+export function Icon({
+  name,
+  size = 20,
+  label,
+  slot
+}: {
+  name: IconName;
+  size?: number;
+  label?: string;
+  slot?: string;
+}) {
   const props = label ? { role: 'img' as const, 'aria-label': label } : { 'aria-hidden': 'true' as const };
   return (
     <svg
@@ -132,6 +161,7 @@ export function Icon({ name, size = 20, label }: { name: IconName; size?: number
       strokeLinecap='round'
       strokeLinejoin='round'
       focusable='false'
+      slot={slot}
       {...props}
     >
       <path d={ICON_PATHS[name]} />
@@ -140,8 +170,8 @@ export function Icon({ name, size = 20, label }: { name: IconName; size?: number
 }
 
 function makeIcon(name: IconName) {
-  return function NamedIcon({ size = 20, label }: { size?: number; label?: string }) {
-    return <Icon name={name} size={size} label={label} />;
+  return function NamedIcon({ size = 20, label, slot }: { size?: number; label?: string; slot?: string }) {
+    return <Icon name={name} size={size} label={label} slot={slot} />;
   };
 }
 
@@ -158,3 +188,4 @@ export const CheckIcon = makeIcon('check');
 export const DownloadIcon = makeIcon('download');
 export const AlertIcon = makeIcon('alert');
 export const DownIcon = makeIcon('down');
+export const BackIcon = makeIcon('back');

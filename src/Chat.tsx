@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import type { Peer } from './inbox';
 import { openSession, type PeerMediaState, type ReceivedFile, type Session } from './room';
 import { HAS_TURN, MAX_MESSAGE_LENGTH } from './config';
-import { Avatar, Icon, Modal, useRingtone } from './ui';
+import { Avatar, Icon, Modal, submitForm, useRingtone } from './ui';
 
 const SLOW_CONNECT_MS = 25000;
 
@@ -54,7 +54,6 @@ export function Chat({ secret, peer, relayOnly, saved, onSave, onLeave }: ChatPr
   const session = useRef<Session | null>(null);
   const msgsRef = useRef<HTMLUListElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const addDebug = (line: string) =>
     setDebug((d: string[]) => {
@@ -165,10 +164,6 @@ export function Chat({ secret, peer, relayOnly, saved, onSave, onLeave }: ChatPr
     session.current?.send(text);
     setMsgs((m: Msg[]) => [...m, { mine: true, text, at: Date.now(), id: `m${++msgIdCounter}` }]);
     setDraft('');
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = '24px';
-    }
   };
 
   const startCall = async (video: boolean) => {
@@ -239,12 +234,8 @@ export function Chat({ secret, peer, relayOnly, saved, onSave, onLeave }: ChatPr
     setAtBottom(true);
   };
 
-  const onTextareaInput = (e: Event) => {
-    const el = e.target as HTMLTextAreaElement;
-    setDraft(el.value);
-    el.style.height = 'auto';
-    const cap = 6 * 24;
-    el.style.height = `${Math.min(el.scrollHeight, cap)}px`;
+  const onTextareaInput = (e: Event & { currentTarget: EventTarget & { value: string } }) => {
+    setDraft(e.currentTarget.value);
   };
 
   const onKeyDown = (e: KeyboardEvent) => {
@@ -280,9 +271,10 @@ export function Chat({ secret, peer, relayOnly, saved, onSave, onLeave }: ChatPr
   return (
     <div class='chat'>
       <header class='chat-head'>
-        <button class='ghost' onClick={onLeave} aria-label='Leave chat'>
+        <md-text-button onClick={onLeave}>
+          <Icon name='back' size={18} slot='icon' />
           Back
-        </button>
+        </md-text-button>
         <div class='grow'>
           <strong>{peer?.name || 'Private room'}</strong>
           <span class={peers === 1 ? 'pill on' : 'pill'} role='status'>
@@ -292,15 +284,15 @@ export function Chat({ secret, peer, relayOnly, saved, onSave, onLeave }: ChatPr
           </span>
         </div>
         {peer && !saved && (
-          <button class='ghost' onClick={onSave}>
+          <md-outlined-button onClick={onSave}>
             Save contact
-          </button>
+          </md-outlined-button>
         )}
       </header>
 
       {!peer && (
         <p class='invite'>
-          <button onClick={copyLink}>{copied ? 'Link copied' : 'Copy invite link'}</button>
+          <md-filled-button onClick={copyLink}>{copied ? 'Link copied' : 'Copy invite link'}</md-filled-button>
           <span class='muted'>Send this link to the other person.</span>
         </p>
       )}
@@ -317,18 +309,32 @@ export function Chat({ secret, peer, relayOnly, saved, onSave, onLeave }: ChatPr
       )}
 
       <div class='call-bar'>
-        <button onClick={() => startCall(false)} disabled={peers === 0 || !!localStream}>
+        <md-filled-tonal-button onClick={() => startCall(false)} disabled={peers === 0 || !!localStream}>
+          <Icon name='phone' size={18} slot='icon' />
           Voice call
-        </button>
-        <button onClick={() => startCall(true)} disabled={peers === 0 || !!localStream}>
+        </md-filled-tonal-button>
+        <md-filled-tonal-button onClick={() => startCall(true)} disabled={peers === 0 || !!localStream}>
+          <Icon name='video' size={18} slot='icon' />
           Video call
-        </button>
-        <button type='button' class='call-tool' disabled={!localStream} aria-pressed={muted} aria-label={muted ? 'Unmute microphone' : 'Mute microphone'} onClick={toggleMute}>
+        </md-filled-tonal-button>
+        <md-icon-button
+          class='call-tool'
+          disabled={!localStream}
+          aria-pressed={muted}
+          aria-label={muted ? 'Unmute microphone' : 'Mute microphone'}
+          onClick={toggleMute}
+        >
           <Icon name={muted ? 'mic-off' : 'mic'} />
-        </button>
-        <button type='button' class='call-tool' disabled={!localStream} aria-pressed={cameraOff} aria-label={cameraOff ? 'Turn camera on' : 'Turn camera off'} onClick={toggleCamera}>
+        </md-icon-button>
+        <md-icon-button
+          class='call-tool'
+          disabled={!localStream}
+          aria-pressed={cameraOff}
+          aria-label={cameraOff ? 'Turn camera on' : 'Turn camera off'}
+          onClick={toggleCamera}
+        >
           <Icon name={cameraOff ? 'video-off' : 'video'} />
-        </button>
+        </md-icon-button>
         {localStream && <span class='call-timer'>{formatTimer(now - (callStart ?? now))}</span>}
         {(peerMedia.muted || peerMedia.cameraOff) && (
           <span class='peer-media'>
@@ -337,40 +343,35 @@ export function Chat({ secret, peer, relayOnly, saved, onSave, onLeave }: ChatPr
             {peerMedia.cameraOff ? 'Peer camera off' : ''}
           </span>
         )}
-        <button class='ghost' onClick={endCall} disabled={!localStream && !remoteStream}>
-          <Icon name='phone-off' /> End call
-        </button>
+        <md-outlined-button class='call-end' onClick={endCall} disabled={!localStream && !remoteStream}>
+          <Icon name='phone-off' size={18} slot='icon' />
+          End call
+        </md-outlined-button>
       </div>
       {calling && (
         <p class='banner' role='status'>
           <span>Calling {peerName}…</span>
-          <button class='danger' onClick={endCall}>
-            Cancel
-          </button>
+          <md-text-button onClick={endCall}>Cancel</md-text-button>
         </p>
       )}
-      <Modal open={incoming} labelId='call-title' descId='call-desc' onCancel={declineCall}>
-        <div class='modal-body center'>
+      <Modal open={incoming} onCancel={declineCall}>
+        <div slot='headline'>{peerName}</div>
+        <div slot='content' class='modal-body center'>
           <span class='ring'>
             <Avatar id={peer?.id ?? secret} label={peerName} size='lg' />
           </span>
           <p class='eyebrow' id='call-desc'>
             Incoming {incomingVideo ? 'video' : 'voice'} call
           </p>
-          <h2 id='call-title'>{peerName}</h2>
-          <div class='modal-actions'>
-            <button class='danger' onClick={declineCall}>
-              Decline
-            </button>
-            {incomingVideo && (
-              <button class='ghost' onClick={() => startCall(false)}>
-                Audio only
-              </button>
-            )}
-            <button class='accept' onClick={() => startCall(incomingVideo)} autoFocus>
-              Accept
-            </button>
-          </div>
+        </div>
+        <div slot='actions' class='modal-actions'>
+          <md-text-button onClick={declineCall}>Decline</md-text-button>
+          {incomingVideo && (
+            <md-outlined-button onClick={() => startCall(false)}>
+              Audio only
+            </md-outlined-button>
+          )}
+          <md-filled-button onClick={() => startCall(incomingVideo)}>Accept</md-filled-button>
         </div>
       </Modal>
       {callError && (
@@ -409,34 +410,41 @@ export function Chat({ secret, peer, relayOnly, saved, onSave, onLeave }: ChatPr
           })}
         </ul>
         {!atBottom && msgs.length > 0 && (
-          <button class='jump-latest' aria-label='Jump to latest messages' onClick={jumpToLatest}>
-            <Icon name='down' /> Jump to latest
-          </button>
+          <md-filled-tonal-button class='jump-latest' aria-label='Jump to latest messages' onClick={jumpToLatest}>
+            <Icon name='down' size={16} slot='icon' />
+            Jump to latest
+          </md-filled-tonal-button>
         )}
       </div>
-      <form class='composer' onSubmit={send}>
+      <form
+        class='composer'
+        onSubmit={send}
+      >
         <div class='composer-tools'>
-          <button type='button' class='composer-attach' aria-label='Send a file' title='Send a file (up to 50 MB)' onClick={() => fileInputRef.current?.click()}>
+          <md-icon-button
+            class='composer-attach'
+            aria-label='Send a file'
+            onClick={() => fileInputRef.current?.click()}
+          >
             <Icon name='paperclip' />
-          </button>
+          </md-icon-button>
         </div>
         <div class='composer-field'>
-          <textarea
-            class='composer-input'
-            ref={textareaRef}
+          <md-outlined-text-field
+            type='textarea'
+            label='Message'
+            aria-label='Message'
+            rows={2}
             value={draft}
+            maxLength={MAX_MESSAGE_LENGTH}
+            placeholder='Type a message'
             onInput={onTextareaInput}
             onKeyDown={onKeyDown}
-            placeholder='Type a message'
-            maxLength={MAX_MESSAGE_LENGTH}
-            aria-label='Message'
-            rows={1}
-            enterkeyhint='send'
           />
         </div>
-        <button type='submit' class='composer-send'>
+        <md-filled-button class='composer-send' onClick={submitForm}>
           Send
-        </button>
+        </md-filled-button>
         <span class='composer-count' aria-hidden='true'>
           {draft.length} / {MAX_MESSAGE_LENGTH}
         </span>
@@ -445,7 +453,7 @@ export function Chat({ secret, peer, relayOnly, saved, onSave, onLeave }: ChatPr
       <p class='file-transfer'>
         <input type='file' ref={fileInputRef} class='visually-hidden' aria-label='Send a file' onChange={onPickFile} disabled={peers === 0 || sendPct !== null} />
       </p>
-      {sendPct !== null && <progress value={sendPct} max={100} aria-label='Upload progress' />}
+      {sendPct !== null && <md-linear-progress value={sendPct} max={100} aria-label='Upload progress' />}
       {fileError && (
         <p role='alert' class='error'>
           {fileError}
@@ -471,9 +479,9 @@ export function Chat({ secret, peer, relayOnly, saved, onSave, onLeave }: ChatPr
 
       <details class='debug'>
         <summary>Debug info</summary>
-        <button type='button' class='ghost' onClick={() => navigator.clipboard.writeText(debug.join(NL))}>
+        <md-text-button onClick={() => navigator.clipboard.writeText(debug.join(NL))}>
           Copy debug
-        </button>
+        </md-text-button>
         <pre id='debug'>{debug.join(NL)}</pre>
       </details>
     </div>

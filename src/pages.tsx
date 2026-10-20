@@ -3,7 +3,7 @@ import { HAS_TURN } from './config';
 import { exportBackup, formatId, type Identity } from './identity';
 import type { IncomingRequest } from './inbox';
 import type { Contact } from './store';
-import { Avatar, Icon } from './ui';
+import { Avatar, Icon, submitForm } from './ui';
 
 export interface Pending {
   key: number;
@@ -33,18 +33,14 @@ function IdCard({ identity, name }: { identity: Identity; name: string }) {
         <p class='id-code'>{text}</p>
         <p class='muted'>{name ? `People see you as ${name}.` : 'Set a display name so people know it is you.'}</p>
         <div class='row id-card-actions'>
-          <button class='id-copy' onClick={copy}>
-            {copied && (
-              <>
-                <Icon name='check' size={16} />{' '}
-              </>
-            )}
+          <md-filled-button onClick={copy}>
+            {copied && <Icon name='check' size={16} slot='icon' />}
             {copied ? 'Copied' : 'Copy ID'}
-          </button>
+          </md-filled-button>
           {'share' in navigator && (
-            <button class='ghost' onClick={share}>
+            <md-outlined-button onClick={share}>
               Share
-            </button>
+            </md-outlined-button>
           )}
         </div>
       </div>
@@ -84,15 +80,21 @@ export function Home(p: HomeProps) {
                 p.onName(draftName);
               }}
             >
-              <input
+              <md-outlined-text-field
                 class='grow'
-                value={draftName}
-                onInput={(e) => setDraftName((e.target as HTMLInputElement).value)}
-                placeholder='Your name'
-                maxLength={32}
+                label='Display name'
                 aria-label='Display name'
+                value={draftName}
+                maxLength={32}
+                onInput={(e) => setDraftName(e.currentTarget.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    p.onName(draftName);
+                  }
+                }}
               />
-              <button>Save</button>
+              <md-filled-button onClick={submitForm}>Save</md-filled-button>
             </form>
           </div>
         </section>
@@ -109,17 +111,23 @@ export function Home(p: HomeProps) {
               p.onDial(target);
             }}
           >
-            <input
+            <md-outlined-text-field
               class='grow mono'
-              value={target}
-              onInput={(e) => setTarget((e.target as HTMLInputElement).value)}
-              placeholder='XXXX-XXXX-XXXX-XXXX'
+              label='Their ID'
               aria-label='Their ID'
-              autocapitalize='characters'
-              autocomplete='off'
-              spellcheck={false}
+              value={target}
+              placeholder='XXXX-XXXX-XXXX-XXXX'
+              onInput={(e) => setTarget(e.currentTarget.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  p.onDial(target);
+                }
+              }}
             />
-            <button disabled={p.busy}>Connect</button>
+            <md-filled-button disabled={p.busy} onClick={submitForm}>
+              Connect
+            </md-filled-button>
           </form>
         </div>
       </section>
@@ -127,9 +135,9 @@ export function Home(p: HomeProps) {
       <section class='card home-invite'>
         <h2>No ID? Share a link</h2>
         <p class='muted'>Create a private room and send the link through any app. It works once you both open it.</p>
-        <button class='ghost' onClick={p.onInvite}>
+        <md-outlined-button onClick={p.onInvite}>
           Create invite link
-        </button>
+        </md-outlined-button>
       </section>
     </>
   );
@@ -181,18 +189,18 @@ export function Contacts(p: ContactsProps) {
                 <span class='muted mono'>{formatId(c.id)}</span>
               </div>
               <div class='row contact-actions'>
-                <button class='contact-primary' disabled={p.busy} onClick={() => p.onMessage(c.id)}>
-                  <Icon name='send' size={16} />{' '}
+                <button type='button' class='btn btn-filled contact-primary' disabled={p.busy} onClick={() => p.onMessage(c.id)}>
+                  <Icon name='send' size={16} />
                   Message
                 </button>
                 <div class='row contact-secondary' role='group' aria-label={`More actions for ${label(c)}`}>
-                  <button class='ghost' onClick={() => rename(c)}>
+                  <button type='button' class='btn btn-text' onClick={() => rename(c)}>
                     Rename
                   </button>
-                  <button class='ghost' onClick={() => p.onRemove(c.id)}>
+                  <button type='button' class='btn btn-text' onClick={() => p.onRemove(c.id)}>
                     Remove
                   </button>
-                  <button class='danger' onClick={() => p.onBlock(c.id)}>
+                  <button type='button' class='btn btn-text btn-danger' onClick={() => p.onBlock(c.id)}>
                     Block
                   </button>
                 </div>
@@ -206,24 +214,22 @@ export function Contacts(p: ContactsProps) {
         <h2>Add a contact</h2>
         <div class='contacts-add-inner'>
           <form class='stack' onSubmit={add}>
-            <input
+            <md-outlined-text-field
               class='mono'
-              value={rawId}
-              onInput={(e) => setRawId((e.target as HTMLInputElement).value)}
-              placeholder='XXXX-XXXX-XXXX-XXXX'
+              label='Contact ID'
               aria-label='Contact ID'
-              autocapitalize='characters'
-              autocomplete='off'
-              spellcheck={false}
+              value={rawId}
+              placeholder='XXXX-XXXX-XXXX-XXXX'
+              onInput={(e) => setRawId(e.currentTarget.value)}
             />
-            <input
-              value={nick}
-              onInput={(e) => setNick((e.target as HTMLInputElement).value)}
-              placeholder='Nickname (optional)'
-              maxLength={32}
+            <md-outlined-text-field
+              label='Nickname'
               aria-label='Nickname'
+              value={nick}
+              maxLength={32}
+              onInput={(e) => setNick(e.currentTarget.value)}
             />
-            <button>Add contact</button>
+            <md-filled-button onClick={submitForm}>Add contact</md-filled-button>
           </form>
           {error && (
             <p class='error' role='alert'>
@@ -236,39 +242,41 @@ export function Contacts(p: ContactsProps) {
       {p.blocked.length > 0 && (
         <section class='card'>
           <h2>Blocked</h2>
-          <ul class='list'>
+          <md-list class='blocked-list'>
             {p.blocked.map((id) => (
-              <li key={id}>
-                <span class='grow mono'>{formatId(id)}</span>
-                <button class='ghost' onClick={() => p.onUnblock(id)}>
+              <md-list-item key={id}>
+                <span slot='headline' class='mono'>
+                  {formatId(id)}
+                </span>
+                <md-text-button slot='end' onClick={() => p.onUnblock(id)}>
                   Unblock
-                </button>
-              </li>
+                </md-text-button>
+              </md-list-item>
             ))}
-          </ul>
+          </md-list>
         </section>
       )}
     </>
   );
 }
 
-function Toggle(p: { label: string; hint: string; checked: boolean; onChange: (v: boolean) => void }) {
+function Toggle(p: { label: string; hint: string; checked: boolean; disabled?: boolean; onChange: (v: boolean) => void }) {
   return (
-    <label class='toggle' data-on={p.checked ? 'true' : 'false'}>
+    <div class='toggle' data-on={p.checked ? 'true' : 'false'}>
       <span class='grow toggle-text'>
         <strong>{p.label}</strong>
         <span class='muted'>{p.hint}</span>
       </span>
       <span class='toggle-control'>
-        <input
+        <md-switch
           class='toggle-switch'
-          type='checkbox'
-          checked={p.checked}
-          data-on={p.checked ? 'true' : 'false'}
-          onChange={(e) => p.onChange((e.target as HTMLInputElement).checked)}
+          selected={p.checked}
+          disabled={p.disabled}
+          aria-label={p.label}
+          onChange={(e) => p.onChange(e.currentTarget.selected)}
         />
       </span>
-    </label>
+    </div>
   );
 }
 
@@ -322,15 +330,21 @@ export function Profile(p: ProfileProps) {
         <h2>Display name</h2>
         <div class='profile-name-inner'>
           <form class='row' onSubmit={save}>
-            <input
+            <md-outlined-text-field
               class='grow'
-              value={draft}
-              onInput={(e) => setDraft((e.target as HTMLInputElement).value)}
-              placeholder='Your name'
-              maxLength={32}
+              label='Display name'
               aria-label='Display name'
+              value={draft}
+              maxLength={32}
+              onInput={(e) => setDraft(e.currentTarget.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  save(e as unknown as Event);
+                }
+              }}
             />
-            <button>{saved ? 'Saved' : 'Save'}</button>
+            <md-filled-button onClick={submitForm}>{saved ? 'Saved' : 'Save'}</md-filled-button>
           </form>
         </div>
       </section>
@@ -351,6 +365,7 @@ export function Profile(p: ProfileProps) {
               : 'Unavailable: no TURN server is configured, so this setting is ignored.'
           }
           checked={p.relayOnly && HAS_TURN}
+          disabled={!HAS_TURN}
           onChange={p.onRelayOnly}
         />
       </section>
@@ -358,22 +373,22 @@ export function Profile(p: ProfileProps) {
       <section class='card profile-backup'>
         <h2>Backup</h2>
         <p class='muted'>
-          Your ID lives in this browser. Save a backup file to restore it elsewhere. The file contains your private
-          key, so keep it secret.
+          Your ID lives in this browser. Save a backup file to restore it elsewhere. The file contains your private key, so
+          keep it secret.
         </p>
         <div class='row profile-backup-actions'>
-          <button class='ghost' onClick={download}>
-            <Icon name='download' size={16} />{' '}
+          <md-outlined-button onClick={download}>
+            <Icon name='download' size={16} slot='icon' />
             Export backup
-          </button>
+          </md-outlined-button>
           <label class='file-btn'>
             Import backup
             <input type='file' accept='application/json,.json' onChange={onFile} />
           </label>
-          <button class='danger' onClick={reset}>
-            <Icon name='alert' size={16} />{' '}
+          <md-text-button class='btn-danger' onClick={reset}>
+            <Icon name='alert' size={16} slot='icon' />
             New ID
-          </button>
+          </md-text-button>
         </div>
       </section>
     </>
@@ -400,8 +415,8 @@ export function Help() {
         <li>Anyone who learns your ID can send you a request. You choose to accept, decline or block.</li>
         <li>The person you connect with can see your IP address unless relay-only mode is on.</li>
         <li>
-          An attacker who controls the public signaling relays and is present from the very first contact could sit in
-          the middle. Chats by invite link are not affected by this when the link is shared privately.
+          An attacker who controls the public signaling relays and is present from the very first contact could sit in the
+          middle. Chats by invite link are not affected by this when the link is shared privately.
         </li>
       </ul>
       <h2>Trouble connecting?</h2>

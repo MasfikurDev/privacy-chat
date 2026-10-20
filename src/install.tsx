@@ -96,10 +96,8 @@ export function InstallBanner() {
           <strong>Install Privacy Chat</strong>
           <span>Opens like a normal app from your home screen or desktop.</span>
         </div>
-        <button onClick={install}>Install</button>
-        <button class='ghost' onClick={dismiss}>
-          Not now
-        </button>
+        <md-filled-button onClick={install}>Install</md-filled-button>
+        <md-text-button onClick={dismiss}>Not now</md-text-button>
       </aside>
     );
   }
@@ -111,9 +109,7 @@ export function InstallBanner() {
           <strong>Install Privacy Chat</strong>
           <span>Tap the Share button, then choose Add to Home Screen.</span>
         </div>
-        <button class='ghost' onClick={dismiss}>
-          Got it
-        </button>
+        <md-text-button onClick={dismiss}>Got it</md-text-button>
       </aside>
     );
   }

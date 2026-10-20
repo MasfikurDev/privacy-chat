@@ -54,15 +54,7 @@ function ScreenAnnouncer({ screen }: { screen: Screen }) {
     <div
       aria-live='polite'
       role='status'
-      style={{
-        position: 'absolute',
-        width: '1px',
-        height: '1px',
-        overflow: 'hidden',
-        clip: 'rect(0,0,0,0)',
-        clipPath: 'inset(50%)',
-        whiteSpace: 'nowrap'
-      }}
+      class='visually-hidden'
     >
       {announced}
     </div>
@@ -337,17 +329,17 @@ export function App() {
           <span>
             {dialing.status} ({labelFor(dialing.id)})
           </span>
-          <button class='ghost' onClick={() => dialRef.current?.cancel()}>
+          <md-text-button onClick={() => dialRef.current?.cancel()}>
             Cancel
-          </button>
+          </md-text-button>
         </div>
       )}
       {notice && (
         <div class='banner error' role='alert'>
           <span>{notice}</span>
-          <button class='ghost' onClick={() => setNotice('')}>
+          <md-text-button onClick={() => setNotice('')}>
             Dismiss
-          </button>
+          </md-text-button>
         </div>
       )}
 
@@ -416,16 +408,17 @@ export function App() {
       </main>
 
       <nav class='tabs' aria-label='Main'>
-        {TABS.map(([key, text]) => (
-          <button
-            key={key}
-            class={screen === key ? 'tab active' : 'tab'}
-            aria-current={screen === key ? 'page' : undefined}
-            onClick={() => setScreen(key)}
-          >
-            {text}
-          </button>
-        ))}
+        {TABS.map(([key, text]) =>
+          screen === key ? (
+            <md-filled-button key={key} aria-current='page' onClick={() => setScreen(key)}>
+              {text}
+            </md-filled-button>
+          ) : (
+            <md-text-button key={key} onClick={() => setScreen(key)}>
+              {text}
+            </md-text-button>
+          )
+        )}
       </nav>
       {requestDialog(false)}
     </div>
