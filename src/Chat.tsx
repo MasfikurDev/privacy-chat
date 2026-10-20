@@ -1,10 +1,6 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import type { Peer } from './inbox';
 import { openSession, type ReceivedFile, type Session } from './room';
-import { HAS_TURN } from './config';
-import { Avatar, Modal, useRingtone } from './ui';
-
-const SLOW_CONNECT_MS = 25000;
 
 interface Msg {
   mine: boolean;
@@ -26,7 +22,6 @@ const NL = String.fromCharCode(10);
 
 export function Chat({ secret, peer, relayOnly, saved, onSave, onLeave }: ChatProps) {
   const [peers, setPeers] = useState(0);
-  const [slow, setSlow] = useState(false);
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [draft, setDraft] = useState('');
   const [copied, setCopied] = useState(false);
@@ -39,6 +34,7 @@ export function Chat({ secret, peer, relayOnly, saved, onSave, onLeave }: ChatPr
   const [fileError, setFileError] = useState('');
   const localVideo = useRef<HTMLVideoElement>(null);
   const remoteVideo = useRef<HTMLVideoElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
   const session = useRef<Session | null>(null);
 
   const addDebug = (line: string) =>
@@ -61,20 +57,17 @@ export function Chat({ secret, peer, relayOnly, saved, onSave, onLeave }: ChatPr
   }, []);
 
   useEffect(() => {
-    if (peers > 0) {
-      setSlow(false);
-      return;
-    }
-    const t = setTimeout(() => setSlow(true), SLOW_CONNECT_MS);
-    return () => clearTimeout(t);
-  }, [peers]);
-
-  useEffect(() => {
     if (localVideo.current) localVideo.current.srcObject = localStream;
   }, [localStream]);
   useEffect(() => {
     if (remoteVideo.current) remoteVideo.current.srcObject = remoteStream;
   }, [remoteStream]);
+
+  // Keep the newest message in view.
+  useEffect(() => {
+    const el = bodyRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [msgs.length, files.length]);
 
   useEffect(() => {
     let cancelled = false;
@@ -83,12 +76,7 @@ export function Chat({ secret, peer, relayOnly, saved, onSave, onLeave }: ChatPr
       onMessage: (text) => setMsgs((m) => [...m, { mine: false, text }]),
       onDebug: addDebug,
       onRemoteStream: setRemoteStream,
-      onFile: (f) => setFiles((l) => [...l, f]),
-      onCallEnded: () => {
-        session.current?.endCall();
-        setLocalStream(null);
-        setRemoteStream(null);
-      }
+      onFile: (f) => setFiles((l) => [...l, f])
     })
       .then((s) => {
         if (cancelled) s.leave();
@@ -136,17 +124,6 @@ export function Chat({ secret, peer, relayOnly, saved, onSave, onLeave }: ChatPr
     setRemoteStream(null);
   };
 
-  const declineCall = () => {
-    session.current?.declineCall();
-    setRemoteStream(null);
-  };
-
-  const incoming = !!remoteStream && !localStream;
-  const incomingVideo = !!remoteStream && remoteStream.getVideoTracks().length > 0;
-  const calling = !!localStream && !remoteStream;
-  const peerName = peer?.name || 'Someone';
-  useRingtone(incoming);
-
   const onPickFile = async (e: Event) => {
     const input = e.target as HTMLInputElement;
     const file = input.files?.[0];
@@ -164,10 +141,12 @@ export function Chat({ secret, peer, relayOnly, saved, onSave, onLeave }: ChatPr
     }
   };
 
+  const attachDisabled = peers === 0 || sendPct !== null;
+
   return (
     <div class='chat'>
       <header class='chat-head'>
-        <button class='ghost' onClick={onLeave} aria-label='Leave chat'>
+        <button class='ghost sm' onClick={onLeave} aria-label='Leave chat'>
           Back
         </button>
         <div class='grow'>
@@ -179,137 +158,102 @@ export function Chat({ secret, peer, relayOnly, saved, onSave, onLeave }: ChatPr
           </span>
         </div>
         {peer && !saved && (
-          <button class='ghost' onClick={onSave}>
+          <button class='ghost sm' onClick={onSave}>
             Save contact
           </button>
         )}
       </header>
 
-      {!peer && (
-        <p class='invite'>
-          <button onClick={copyLink}>{copied ? 'Link copied' : 'Copy invite link'}</button>
-          <span class='muted'>Send this link to the other person.</span>
-        </p>
-      )}
-      {relayOnly && HAS_TURN && <p class='muted'>Relay-only mode is on: traffic goes through the TURN relay.</p>}
-      {relayOnly && !HAS_TURN && (
-        <p class='muted'>Relay-only mode is ignored because no TURN server is configured.</p>
-      )}
-      {slow && peers === 0 && (
-        <p class='muted' role='status'>
-          {HAS_TURN
-            ? 'Still connecting. Make sure the other person has the same link open.'
-            : 'Still connecting. If you are on different networks (e.g. mobile data), a direct connection may be blocked and a TURN relay is needed.'}
-        </p>
-      )}
-
-      <p class='calls'>
-        <button onClick={() => startCall(false)} disabled={peers === 0 || !!localStream}>
+      <div class='chat-tools'>
+        <button class='sm' onClick={() => startCall(false)} disabled={peers === 0 || !!localStream}>
           Voice call
         </button>
-        <button onClick={() => startCall(true)} disabled={peers === 0 || !!localStream}>
+        <button class='sm' onClick={() => startCall(true)} disabled={peers === 0 || !!localStream}>
           Video call
         </button>
-        <button class='ghost' onClick={endCall} disabled={!localStream && !remoteStream}>
+        <button class='ghost sm' onClick={endCall} disabled={!localStream && !remoteStream}>
           End call
         </button>
-      </p>
-      {calling && (
-        <p class='banner' role='status'>
-          <span>Calling {peerName}…</span>
-          <button class='danger' onClick={endCall}>
-            Cancel
-          </button>
-        </p>
-      )}
-      <Modal open={incoming} labelId='call-title' descId='call-desc' onCancel={declineCall}>
-        <div class='modal-body center'>
-          <span class='ring'>
-            <Avatar id={peer?.id ?? secret} label={peerName} size='lg' />
-          </span>
-          <p class='eyebrow' id='call-desc'>
-            Incoming {incomingVideo ? 'video' : 'voice'} call
-          </p>
-          <h2 id='call-title'>{peerName}</h2>
-          <div class='modal-actions'>
-            <button class='danger' onClick={declineCall}>
-              Decline
-            </button>
-            {incomingVideo && (
-              <button class='ghost' onClick={() => startCall(false)}>
-                Audio only
-              </button>
-            )}
-            <button class='accept' onClick={() => startCall(incomingVideo)} autoFocus>
-              Accept
-            </button>
-          </div>
-        </div>
-      </Modal>
-      {callError && (
-        <p role='alert' class='error'>
-          {callError}
-        </p>
-      )}
-      <div class='videos'>
+      </div>
+
+      <div class='videos' hidden={!localStream && !remoteStream}>
         <video ref={remoteVideo} autoPlay playsInline hidden={!remoteStream} />
         <video ref={localVideo} class='self' autoPlay playsInline muted hidden={!localStream} />
       </div>
 
-      <ul class='msgs' aria-live='polite'>
-        {msgs.map((m, i) => (
-          <li class={m.mine ? 'mine' : 'theirs'} key={i}>
-            {m.text}
-          </li>
-        ))}
-      </ul>
-      <form class='composer' onSubmit={send}>
-        <input
-          value={draft}
-          onInput={(e) => setDraft((e.target as HTMLInputElement).value)}
-          placeholder='Type a message'
-          maxLength={4000}
-          aria-label='Message'
-        />
-        <button disabled={peers === 0}>Send</button>
-      </form>
+      <div class='chat-body' ref={bodyRef}>
+        {!peer && (
+          <p class='invite'>
+            <button onClick={copyLink}>{copied ? 'Link copied' : 'Copy invite link'}</button>
+            <span class='muted'>Send this link to the other person.</span>
+          </p>
+        )}
+        {relayOnly && <p class='muted'>Relay-only mode is on, so connections need a TURN relay.</p>}
+        {remoteStream && !localStream && (
+          <p role='status'>The other person started a call. Join with Voice call or Video call.</p>
+        )}
+        {callError && (
+          <p role='alert' class='error'>
+            {callError}
+          </p>
+        )}
 
-      <p>
-        <label>
-          Send a file (up to 50 MB){' '}
-          <input type='file' onChange={onPickFile} disabled={peers === 0 || sendPct !== null} />
-        </label>
-      </p>
-      {sendPct !== null && <progress value={sendPct} max={100} aria-label='Upload progress' />}
-      {fileError && (
-        <p role='alert' class='error'>
-          {fileError}
-        </p>
-      )}
-      {files.length > 0 && (
-        <ul class='files'>
-          {files.map((f, i) => (
-            <li key={i}>
-              {f.verified ? (
-                <a href={f.url} download={f.name}>
-                  {f.name}
-                </a>
-              ) : (
-                <span>{f.name} (failed integrity check, discarded)</span>
-              )}{' '}
-              ({kb(f.size)})
+        <ul class='msgs' aria-live='polite'>
+          {msgs.map((m, i) => (
+            <li class={m.mine ? 'mine' : 'theirs'} key={i}>
+              {m.text}
             </li>
           ))}
         </ul>
-      )}
 
-      <details class='debug'>
-        <summary>Debug info</summary>
-        <button type='button' class='ghost' onClick={() => navigator.clipboard.writeText(debug.join(NL))}>
-          Copy debug
-        </button>
-        <pre id='debug'>{debug.join(NL)}</pre>
-      </details>
+        {sendPct !== null && <progress value={sendPct} max={100} aria-label='Upload progress' />}
+        {fileError && (
+          <p role='alert' class='error'>
+            {fileError}
+          </p>
+        )}
+        {files.length > 0 && (
+          <ul class='files'>
+            {files.map((f, i) => (
+              <li key={i}>
+                {f.verified ? (
+                  <a href={f.url} download={f.name}>
+                    {f.name}
+                  </a>
+                ) : (
+                  <span>{f.name} (failed integrity check, discarded)</span>
+                )}{' '}
+                ({kb(f.size)})
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <details class='debug'>
+          <summary>Debug info</summary>
+          <button type='button' class='ghost sm' onClick={() => navigator.clipboard.writeText(debug.join(NL))}>
+            Copy debug
+          </button>
+          <pre id='debug'>{debug.join(NL)}</pre>
+        </details>
+      </div>
+
+      <footer class='chat-foot'>
+        <form class='composer' onSubmit={send}>
+          <label class={attachDisabled ? 'attach disabled' : 'attach'}>
+            Attach
+            <input type='file' onChange={onPickFile} disabled={attachDisabled} />
+          </label>
+          <input
+            value={draft}
+            onInput={(e) => setDraft((e.target as HTMLInputElement).value)}
+            placeholder='Type a message'
+            maxLength={4000}
+            aria-label='Message'
+          />
+          <button disabled={peers === 0}>Send</button>
+        </form>
+      </footer>
     </div>
   );
 }

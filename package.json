@@ -5,25 +5,21 @@
   "type": "module",
   "scripts": {
     "dev": "node scripts/make-icons.mjs && vite",
-    "build": "node scripts/make-icons.mjs && tsc --noEmit && vite build",
+    "build": "node scripts/make-icons.mjs && node scripts/check-ui.mjs && tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "audit": "pnpm audit --audit-level=high"
+    "check:ui": "node scripts/check-ui.mjs",
+    "ui:shots": "node scripts/ui-shots.mjs",
+    "audit": "npm audit --audit-level=high"
   },
   "dependencies": {
     "preact": "10.24.3",
     "trystero": "^0.21.0"
   },
   "devDependencies": {
-    "@preact/preset-vite": "2.10.6",
+    "@preact/preset-vite": "2.9.1",
     "typescript": "5.6.3",
-    "vite": "6.4.4",
-    "vite-plugin-pwa": "0.21.2"
-  },
-  "pnpm": {
-    "overrides": {
-      "@grpc/grpc-js": "^1.14.6",
-      "@libp2p/peer-store": "^12.0.32"
-    }
+    "vite": "5.4.11",
+    "vite-plugin-pwa": "0.21.0"
   }
 }
