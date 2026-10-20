@@ -55,10 +55,10 @@ a {
   *,
   *::before,
   *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
+    animation-duration: 0.01ms;
+    animation-iteration-count: 1;
+    transition-duration: 0.01ms;
+    scroll-behavior: auto;
   }
 }
 
@@ -219,7 +219,7 @@ a {
 }
 
 .btn-filled:hover:not(:disabled) {
-  box-shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 2px 6px 2px rgb(0 0 0 / 0.15);
+  box-shadow: var(--shadow);
 }
 
 .btn-tonal {
@@ -585,7 +585,7 @@ md-text-button.btn-danger {
   border-radius: 50%;
   display: grid;
   place-items: center;
-  color: #fff;
+  color: var(--on-dark);
   font-weight: 700;
   flex: none;
   font-size: var(--md-sys-typescale-title-medium-size);
@@ -741,7 +741,7 @@ md-text-button.btn-danger {
 video {
   max-width: 100%;
   width: 20rem;
-  background: #000;
+  background: var(--video-bg);
   border-radius: var(--md-sys-shape-corner-medium);
 }
 
