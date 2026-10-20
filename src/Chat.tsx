@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import type { Peer } from './inbox';
 import { openSession, type ReceivedFile, type Session } from './room';
+import { HAS_TURN } from './config';
+
+const SLOW_CONNECT_MS = 25000;
 
 interface Msg {
   mine: boolean;
@@ -22,6 +25,7 @@ const NL = String.fromCharCode(10);
 
 export function Chat({ secret, peer, relayOnly, saved, onSave, onLeave }: ChatProps) {
   const [peers, setPeers] = useState(0);
+  const [slow, setSlow] = useState(false);
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [draft, setDraft] = useState('');
   const [copied, setCopied] = useState(false);
@@ -54,6 +58,15 @@ export function Chat({ secret, peer, relayOnly, saved, onSave, onLeave }: ChatPr
       window.removeEventListener('unhandledrejection', onRej);
     };
   }, []);
+
+  useEffect(() => {
+    if (peers > 0) {
+      setSlow(false);
+      return;
+    }
+    const t = setTimeout(() => setSlow(true), SLOW_CONNECT_MS);
+    return () => clearTimeout(t);
+  }, [peers]);
 
   useEffect(() => {
     if (localVideo.current) localVideo.current.srcObject = localStream;
@@ -161,7 +174,17 @@ export function Chat({ secret, peer, relayOnly, saved, onSave, onLeave }: ChatPr
           <span class='muted'>Send this link to the other person.</span>
         </p>
       )}
-      {relayOnly && <p class='muted'>Relay-only mode is on, so connections need a TURN relay.</p>}
+      {relayOnly && HAS_TURN && <p class='muted'>Relay-only mode is on: traffic goes through the TURN relay.</p>}
+      {relayOnly && !HAS_TURN && (
+        <p class='muted'>Relay-only mode is ignored because no TURN server is configured.</p>
+      )}
+      {slow && peers === 0 && (
+        <p class='muted' role='status'>
+          {HAS_TURN
+            ? 'Still connecting. Make sure the other person has the same link open.'
+            : 'Still connecting. If you are on different networks (e.g. mobile data), a direct connection may be blocked and a TURN relay is needed.'}
+        </p>
+      )}
 
       <p class='calls'>
         <button onClick={() => startCall(false)} disabled={peers === 0 || !!localStream}>
