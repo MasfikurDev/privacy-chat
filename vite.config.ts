@@ -12,8 +12,8 @@ export default defineConfig({
         short_name: 'Privacy Chat',
         description: 'Peer-to-peer chat, calls and file sharing.',
         display: 'standalone',
-        background_color: '#ffffff',
-        theme_color: '#1f4e79',
+        background_color: '#f5f3ee',
+        theme_color: '#0f6b63',
         icons: []
       },
       workbox: { globPatterns: ['**/*.{js,css,html}'] }
