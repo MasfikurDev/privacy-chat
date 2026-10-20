@@ -1,4 +1,5 @@
 import { useState } from 'preact/hooks';
+import { HAS_TURN } from './config';
 import { exportBackup, formatId, type Identity } from './identity';
 import type { IncomingRequest } from './inbox';
 import type { Contact } from './store';
@@ -349,8 +350,12 @@ export function Profile(p: ProfileProps) {
         />
         <Toggle
           label='Hide my IP (relay only)'
-          hint='Routes connections through a TURN relay. Needs a TURN server to be configured.'
-          checked={p.relayOnly}
+          hint={
+            HAS_TURN
+              ? 'Routes connections through a TURN relay.'
+              : 'Unavailable: no TURN server is configured, so this setting is ignored.'
+          }
+          checked={p.relayOnly && HAS_TURN}
           onChange={p.onRelayOnly}
         />
       </section>
