@@ -2,7 +2,7 @@
 
 Privacy Chat is a peer-to-peer web app: 1-to-1 chat, voice/video calls and file sharing straight between two browsers. There is no backend. It ships as an installable PWA built with Preact, TypeScript and Vite, deployed to Vercel.
 
-Read this file fully before changing anything. For any visual or interaction change you must also read `docs/ux-playbook.md` (rules, recipes, anti-patterns) and `docs/ui-guide.md` (tokens, components, accessibility).
+Read this file fully before changing anything. For any visual or UX change you must also read `docs/ui-guide.md` (tokens and components) and `docs/ux-playbook.md` (decision rules, recipes, anti-patterns).
 
 ## Commands
 
@@ -25,7 +25,7 @@ Read this file fully before changing anything. For any visual or interaction cha
 - `src/identity.ts`, `src/store.ts` : device key and ID, local storage
 - `src/signaling.ts`, `src/config.ts` : relays, ICE servers, limits
 - `scripts/` : icon generator, UI checks, screenshot tool
-- `docs/` : `ux-playbook.md` (how to do UI work), `ui-guide.md` (design system)
+- `docs/` : `ui-guide.md` (design system), `ux-playbook.md` (how to make UI decisions)
 - `vercel.json` : security headers. `vite.config.ts` : PWA manifest
 
 ## Rules that must never be broken
@@ -39,22 +39,15 @@ Read this file fully before changing anything. For any visual or interaction cha
 
 ## Working on the UI (required procedure)
 
-1. **Read** `docs/ux-playbook.md` and `docs/ui-guide.md`. Reuse existing tokens, classes and recipes before inventing anything.
-2. **Plan** the change in a few lines: which screens, which states (empty, waiting, error, long text), which breakpoints. If it needs a product decision, stop and ask (playbook section 8).
-3. **Implement** with tokens only. Raw colours belong in `:root`. Use `--tap` for touch targets. No inline style attributes, no `!important`.
+1. **Read** `docs/ui-guide.md` and `docs/ux-playbook.md`. Reuse existing tokens, classes and patterns before inventing new ones. If the playbook has a recipe for what you are doing, follow it.
+2. **Plan** the change in a few lines: which screens, which states (empty, waiting, error, long text), which breakpoints. If it touches a decision listed under Stop and ask the human in the playbook, ask first.
+3. **Implement** with tokens only. Raw colours belong in `:root`. Use the `--tap` size for touch targets. No inline style attributes, no `!important`.
 4. **Verify** in a real browser, not by reading code:
    - run `npm run build` (must pass), then `npx vite preview` and `npm run ui:shots`
    - open the screenshots for phone-small (360), phone (390), tablet (768) and desktop (1280), in light and dark
    - check the chat screen with long messages, an empty list and a narrow phone
-5. **Review** with the self-review rubric in the playbook (section 7).
-6. **Report** what changed, which screens you looked at, and anything you could not verify. Do the definition of done in `docs/ui-guide.md`.
-
-## Working efficiently
-
-- Batch changes: edit everything, build once, screenshot once, deploy once.
-- Do not hand-edit generated files (icons, service worker, manifest output).
-- Do not redo work the tooling already does (see playbook section 6).
-- When unsure between two reasonable options, pick the one that reuses an existing pattern and mention the alternative in your summary.
+5. **Review** with the self-review rubric in the playbook and the Definition of done in the UI guide.
+6. **Report** what changed, which screens you looked at, and anything you could not verify.
 
 ## Deploying
 
