@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import { Chat } from './Chat';
 import { formatId, importBackup, loadIdentity, normalizeId, resetIdentity, type Identity } from './identity';
 import { dial, listenInbox, type Peer } from './inbox';
-import { Contacts, Help, Home, Profile, type Pending } from './pages';
+import { Chats, Contacts, Help, Profile, type Pending } from './pages';
 import { RequestDialog } from './RequestDialog';
 import { Icon, type IconName } from './ui';
 import { createSecret } from './room';
@@ -22,17 +22,16 @@ import {
   type Contact
 } from './store';
 
-type Screen = 'home' | 'contacts' | 'profile' | 'help';
+type Screen = 'chats' | 'contacts' | 'profile' | 'help';
 
 const TABS: [Screen, string, IconName][] = [
-  ['home', 'Home', 'home'],
+  ['chats', 'Chats', 'message'],
   ['contacts', 'Contacts', 'users'],
   ['profile', 'Profile', 'user'],
-  ['help', 'Help', 'help']
 ];
 
 const SCREEN_TITLES: Record<Screen, string> = {
-  home: 'Home',
+  chats: 'Chats',
   contacts: 'Contacts',
   profile: 'Profile',
   help: 'Help'
@@ -69,7 +68,7 @@ export function App() {
   const initial = location.hash.slice(1);
   const [identity, setIdentity] = useState<Identity | null>(null);
   const [setupError, setSetupError] = useState('');
-  const [screen, setScreen] = useState<Screen>('home');
+  const [screen, setScreen] = useState<Screen>('chats');
   const [chat, setChat] = useState<{ secret: string; peer?: Peer } | null>(initial ? { secret: initial } : null);
   const [name, setNameState] = useState(getName());
   const [contacts, setContacts] = useState<Contact[]>(getContacts());
@@ -346,16 +345,11 @@ export function App() {
 
       <main class={`page page-${screen}`}>
         <div class='screen' tabIndex={-1} aria-label={title} ref={screenContentRef}>
-          {screen === 'home' && (
-            <Home
-              identity={identity}
-              name={name}
-              online={online}
+          {screen === 'chats' && (
+            <Chats
+              contacts={contacts.filter((c) => !blocked.includes(c.id))}
               busy={!!dialing}
-              onName={(n) => {
-                setName(n);
-                setNameState(getName());
-              }}
+              onMessage={startDial}
               onDial={startDial}
               onInvite={() => openChat(createSecret())}
             />
@@ -402,6 +396,7 @@ export function App() {
               }}
               onImport={importIdentity}
               onReset={newIdentity}
+              onHelp={() => setScreen('help')}
             />
           )}
           {screen === 'help' && <Help />}
