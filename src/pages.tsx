@@ -304,95 +304,77 @@ export function Contacts(p: ContactsProps) {
   };
 
   return (
-    <>
-      <section class='card'>
-        <h2>Contacts</h2>
-        <md-outlined-text-field
-          class='contacts-search'
-          label='Search contacts'
-          aria-label='Search contacts'
-          value={query}
-          onInput={(e) => setQuery(e.currentTarget.value)}
-        />
-        {p.contacts.length === 0 && <p class='muted'>No contacts yet. Add one below, or save someone after you chat.</p>}
-        {p.contacts.length > 0 && sorted.length === 0 && <p class='muted' role='status'>No contacts match “{query.trim()}”.</p>}
-        <ul class='list contacts-list'>
-          {sorted.map((c) => (
-            <li class='contact-item' key={c.id}>
-              <Avatar id={c.id} label={label(c)} />
-              <div class='contact-info grow'>
-                <strong>{label(c)}</strong>
-                <span class='muted mono'>{formatId(c.id)}</span>
-              </div>
-              <div class='row contact-actions'>
-                <button type='button' class='btn btn-filled contact-primary' disabled={p.busy} onClick={() => p.onMessage(c.id)}>
-                  <Icon name='send' size={16} />
-                  Message
-                </button>
-                <div class='row contact-secondary' role='group' aria-label={`More actions for ${label(c)}`}>
-                  <button type='button' class='btn btn-text' onClick={() => rename(c)}>
-                    Rename
-                  </button>
-                  <button type='button' class='btn btn-text' onClick={() => p.onRemove(c.id)}>
-                    Remove
-                  </button>
-                  <button type='button' class='btn btn-text btn-danger' onClick={() => p.onBlock(c.id)}>
-                    Block
-                  </button>
-                </div>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <section class='card contacts-add'>
-        <h2>Add a contact</h2>
-        <div class='contacts-add-inner'>
-          <form class='stack' onSubmit={add}>
-            <md-outlined-text-field
-              class='mono'
-              label='Contact ID'
-              aria-label='Contact ID'
-              value={rawId}
-              placeholder='XXXX-XXXX-XXXX-XXXX'
-              onInput={(e) => setRawId(e.currentTarget.value)}
-            />
-            <md-outlined-text-field
-              label='Nickname'
-              aria-label='Nickname'
-              value={nick}
-              maxLength={32}
-              onInput={(e) => setNick(e.currentTarget.value)}
-            />
-            <md-filled-button onClick={submitForm}>Add contact</md-filled-button>
-          </form>
-          {error && (
-            <p class='error' role='alert'>
-              {error}
-            </p>
+    <div class='mx-auto flex w-full max-w-5xl min-w-0 flex-col gap-5'>
+      <section class='card border border-base-300 bg-base-100 shadow-sm'>
+        <div class='card-body min-w-0 gap-4 p-4 sm:p-6'>
+          <div class='space-y-1'>
+            <h2 class='text-2xl font-bold tracking-tight'>Contacts</h2>
+            <p class='text-sm text-base-content/70'>Manage the people you can start a private conversation with.</p>
+          </div>
+          <label class='input input-bordered flex min-h-12 w-full items-center gap-3 rounded-2xl'>
+            <Icon name='search' size={18} />
+            <input class='grow bg-transparent outline-none' type='search' aria-label='Search contacts' placeholder='Search contacts' value={query} onInput={(e) => setQuery(e.currentTarget.value)} />
+          </label>
+          {p.contacts.length === 0 && <p class='rounded-xl bg-base-200 p-4 text-sm text-base-content/70'>No contacts yet. Add one below, or save someone after you chat.</p>}
+          {p.contacts.length > 0 && sorted.length === 0 && <p class='text-sm text-base-content/70' role='status'>No contacts match “{query.trim()}”.</p>}
+          {sorted.length > 0 && (
+            <ul class='divide-y divide-base-300 overflow-hidden rounded-2xl border border-base-300'>
+              {sorted.map((c) => (
+                <li class='contact-item flex min-w-0 flex-wrap items-center gap-3 p-3 sm:gap-4 sm:p-4' key={c.id}>
+                  <span class='shrink-0'><Avatar id={c.id} label={label(c)} /></span>
+                  <div class='contact-info flex min-w-0 flex-1 flex-col gap-1'>
+                    <strong class='break-words font-semibold'>{label(c)}</strong>
+                    <span class='break-all font-mono text-xs text-base-content/60'>{formatId(c.id)}</span>
+                  </div>
+                  <div class='contact-actions flex w-full min-w-0 flex-col gap-2 sm:w-auto sm:flex-row sm:items-center'>
+                    <button type='button' class='btn btn-primary contact-primary min-h-11 w-full gap-2 sm:w-auto' disabled={p.busy} onClick={() => p.onMessage(c.id)}>
+                      <Icon name='send' size={16} />
+                      Message
+                    </button>
+                    <div class='contact-secondary flex w-full flex-wrap gap-1 sm:w-auto' role='group' aria-label={`More actions for ${label(c)}`}>
+                      <button type='button' class='btn btn-ghost btn-sm min-h-11 flex-1 sm:flex-none' onClick={() => rename(c)}>Rename</button>
+                      <button type='button' class='btn btn-ghost btn-sm min-h-11 flex-1 sm:flex-none' onClick={() => p.onRemove(c.id)}>Remove</button>
+                      <button type='button' class='btn btn-ghost btn-error btn-sm min-h-11 flex-1 sm:flex-none' onClick={() => p.onBlock(c.id)}>Block</button>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
           )}
         </div>
       </section>
 
+      <section class='card border border-base-300 bg-base-100 shadow-sm'>
+        <div class='card-body gap-4 p-4 sm:p-6'>
+          <div class='space-y-1'>
+            <h2 class='text-xl font-bold'>Add a contact</h2>
+            <p class='text-sm text-base-content/70'>Use their Privacy Chat ID to save them on this device.</p>
+          </div>
+          <form class='flex min-w-0 flex-col gap-3' onSubmit={add}>
+            <input class='input input-bordered min-h-12 w-full font-mono' aria-label='Contact ID' placeholder='XXXX-XXXX-XXXX-XXXX' value={rawId} onInput={(e) => setRawId(e.currentTarget.value)} />
+            <input class='input input-bordered min-h-12 w-full' aria-label='Nickname' placeholder='Nickname (optional)' value={nick} maxLength={32} onInput={(e) => setNick(e.currentTarget.value)} />
+            <button class='btn btn-primary min-h-12 w-full sm:w-fit' type='submit'>Add contact</button>
+          </form>
+          {error && <p class='alert alert-error text-sm' role='alert'>{error}</p>}
+        </div>
+      </section>
+
       {p.blocked.length > 0 && (
-        <section class='card'>
-          <h2>Blocked</h2>
-          <md-list class='blocked-list'>
-            {p.blocked.map((id) => (
-              <md-list-item key={id}>
-                <span slot='headline' class='mono'>
-                  {formatId(id)}
-                </span>
-                <md-text-button slot='end' onClick={() => p.onUnblock(id)}>
-                  Unblock
-                </md-text-button>
-              </md-list-item>
-            ))}
-          </md-list>
+        <section class='card border border-base-300 bg-base-100 shadow-sm'>
+          <div class='card-body gap-3 p-4 sm:p-6'>
+            <h2 class='text-xl font-bold'>Blocked</h2>
+            <ul class='divide-y divide-base-300'>
+              {p.blocked.map((id) => (
+                <li class='flex min-w-0 items-center justify-between gap-3 py-3' key={id}>
+                  <span class='break-all font-mono text-sm'>{formatId(id)}</span>
+                  <button class='btn btn-ghost btn-sm min-h-11 shrink-0' type='button' onClick={() => p.onUnblock(id)}>Unblock</button>
+                </li>
+              ))}
+            </ul>
+          </div>
         </section>
       )}
-    </>
+    </div>
   );
 }
 
