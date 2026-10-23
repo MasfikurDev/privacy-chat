@@ -4,6 +4,7 @@ import { formatId, importBackup, loadIdentity, normalizeId, resetIdentity, type 
 import { dial, listenInbox, type Peer } from './inbox';
 import { Contacts, Help, Home, Profile, type Pending } from './pages';
 import { RequestDialog } from './RequestDialog';
+import { Icon, type IconName } from './ui';
 import { createSecret } from './room';
 import {
   cleanName,
@@ -23,11 +24,11 @@ import {
 
 type Screen = 'home' | 'contacts' | 'profile' | 'help';
 
-const TABS: [Screen, string][] = [
-  ['home', 'Home'],
-  ['contacts', 'Contacts'],
-  ['profile', 'Profile'],
-  ['help', 'Help']
+const TABS: [Screen, string, IconName][] = [
+  ['home', 'Home', 'home'],
+  ['contacts', 'Contacts', 'users'],
+  ['profile', 'Profile', 'user'],
+  ['help', 'Help', 'help']
 ];
 
 const SCREEN_TITLES: Record<Screen, string> = {
@@ -408,13 +409,15 @@ export function App() {
       </main>
 
       <nav class='tabs' aria-label='Main'>
-        {TABS.map(([key, text]) =>
+        {TABS.map(([key, text, icon]) =>
           screen === key ? (
             <md-filled-button key={key} aria-current='page' onClick={() => setScreen(key)}>
+              <Icon name={icon} size={18} slot='icon' />
               {text}
             </md-filled-button>
           ) : (
             <md-text-button key={key} onClick={() => setScreen(key)}>
+              <Icon name={icon} size={18} slot='icon' />
               {text}
             </md-text-button>
           )
