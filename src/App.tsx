@@ -292,7 +292,7 @@ export function App() {
 
   if (setupError) {
     return (
-      <div class='app mx-auto flex min-h-dvh w-full max-w-5xl flex-col gap-5 px-4 pt-[calc(env(safe-area-inset-top)+1rem)] pb-[calc(env(safe-area-inset-bottom)+7rem)] md:px-8 md:pb-[calc(env(safe-area-inset-bottom)+2rem)]'>
+      <div class='app mx-auto flex min-h-dvh w-full max-w-5xl flex-col gap-5 px-4 pt-[calc(env(safe-area-inset-top)_+_1rem)] pb-[calc(env(safe-area-inset-bottom)_+_7rem)] md:px-8 md:pb-[calc(env(safe-area-inset-bottom)_+_2rem)]'>
         <main class='page'>
           <section class='card'>
             <h2>Could not set up your ID</h2>
@@ -308,7 +308,7 @@ export function App() {
 
   if (!identity) {
     return (
-      <div class='app mx-auto flex min-h-dvh w-full max-w-5xl flex-col gap-5 px-4 pt-[calc(env(safe-area-inset-top)+1rem)] pb-[calc(env(safe-area-inset-bottom)+7rem)] md:px-8 md:pb-[calc(env(safe-area-inset-bottom)+2rem)]'>
+      <div class='app mx-auto flex min-h-dvh w-full max-w-5xl flex-col gap-5 px-4 pt-[calc(env(safe-area-inset-top)_+_1rem)] pb-[calc(env(safe-area-inset-bottom)_+_7rem)] md:px-8 md:pb-[calc(env(safe-area-inset-bottom)_+_2rem)]'>
         <main class='page'>
           <p role='status'>Setting up your private ID�</p>
         </main>
@@ -317,7 +317,7 @@ export function App() {
   }
 
   return (
-    <div class='app mx-auto flex min-h-dvh w-full max-w-5xl flex-col gap-5 px-4 pt-[calc(env(safe-area-inset-top)+1rem)] pb-[calc(env(safe-area-inset-bottom)+7rem)] md:px-8 md:pb-[calc(env(safe-area-inset-bottom)+2rem)]'>
+    <div class='app mx-auto flex min-h-dvh w-full max-w-5xl flex-col gap-5 px-4 pt-[calc(env(safe-area-inset-top)_+_1rem)] pb-[calc(env(safe-area-inset-bottom)_+_7rem)] md:px-8 md:pb-[calc(env(safe-area-inset-bottom)_+_2rem)]'>
       <header class='top flex flex-col gap-1 px-1'>
         <h1 class='text-2xl font-bold tracking-tight sm:text-3xl'>Privacy Chat</h1>
         <p class='muted'>Peer to peer. No accounts.</p>
@@ -403,7 +403,7 @@ export function App() {
         </div>
       </main>
 
-      <nav class='tabs fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+0.5rem)] z-40 mx-auto flex w-auto max-w-md gap-1 rounded-2xl border border-base-300 bg-base-100/95 p-2 shadow-xl backdrop-blur md:static md:mt-auto md:w-fit md:max-w-none md:translate-x-0 md:shadow-sm' aria-label='Main'>
+      <nav class='fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom)_+_0.5rem)] z-40 mx-auto flex w-auto max-w-md translate-x-0 transform-none gap-1 rounded-2xl border border-base-300 bg-base-100/95 p-2 shadow-xl backdrop-blur md:static md:mt-auto md:w-fit md:max-w-none md:shadow-sm' aria-label='Main'>
         {TABS.map(([key, text, icon]) =>
           screen === key ? (
             <button class='btn btn-primary btn-sm min-h-11 flex-1 gap-2 px-2 sm:px-4' key={key} aria-current='page' onClick={() => setScreen(key)}>
