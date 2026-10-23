@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 test('chats-first layout adapts to wide and narrow viewports', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'Chats' })).toBeVisible();
+  await expect(page.locator('main').getByRole('heading', { name: 'Chats', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'New chat' })).toBeVisible();
 
   let layout = await page.evaluate(() => ({
