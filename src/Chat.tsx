@@ -271,10 +271,10 @@ export function Chat({ secret, peer, relayOnly, saved, onSave, onLeave }: ChatPr
   return (
     <div class='chat'>
       <header class='chat-head'>
-        <md-text-button onClick={onLeave}>
-          <Icon name='back' size={18} slot='icon' />
-          Back
-        </md-text-button>
+        <md-icon-button class='chat-back' aria-label='Back to chats' onClick={onLeave}>
+          <Icon name='back' size={20} />
+        </md-icon-button>
+        <Avatar id={peer?.id ?? secret} label={peer?.name || 'Private room'} />
         <div class='grow'>
           <strong>{peer?.name || 'Private room'}</strong>
           <span class={peers === 1 ? 'pill on' : 'pill'} role='status'>
