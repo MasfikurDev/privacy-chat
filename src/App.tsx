@@ -275,7 +275,7 @@ export function App() {
     const peer = chat.peer;
     const saved = !!peer && contacts.some((c) => c.id === peer.id);
     return (
-      <div class='app app-chat'>
+      <div class='app app-chat flex h-dvh min-h-0 w-full flex-col gap-0 overflow-hidden p-0'>
         <Chat
           key={chat.secret}
           secret={chat.secret}
@@ -292,7 +292,7 @@ export function App() {
 
   if (setupError) {
     return (
-      <div class='app'>
+      <div class='app mx-auto flex min-h-dvh w-full max-w-5xl flex-col gap-5 px-4 pt-[calc(env(safe-area-inset-top)+1rem)] pb-[calc(env(safe-area-inset-bottom)+7rem)] md:px-8 md:pb-[calc(env(safe-area-inset-bottom)+2rem)]'>
         <main class='page'>
           <section class='card'>
             <h2>Could not set up your ID</h2>
@@ -308,7 +308,7 @@ export function App() {
 
   if (!identity) {
     return (
-      <div class='app'>
+      <div class='app mx-auto flex min-h-dvh w-full max-w-5xl flex-col gap-5 px-4 pt-[calc(env(safe-area-inset-top)+1rem)] pb-[calc(env(safe-area-inset-bottom)+7rem)] md:px-8 md:pb-[calc(env(safe-area-inset-bottom)+2rem)]'>
         <main class='page'>
           <p role='status'>Setting up your private ID�</p>
         </main>
@@ -317,9 +317,9 @@ export function App() {
   }
 
   return (
-    <div class='app'>
-      <header class='top'>
-        <h1>Privacy Chat</h1>
+    <div class='app mx-auto flex min-h-dvh w-full max-w-5xl flex-col gap-5 px-4 pt-[calc(env(safe-area-inset-top)+1rem)] pb-[calc(env(safe-area-inset-bottom)+7rem)] md:px-8 md:pb-[calc(env(safe-area-inset-bottom)+2rem)]'>
+      <header class='top flex flex-col gap-1 px-1'>
+        <h1 class='text-2xl font-bold tracking-tight sm:text-3xl'>Privacy Chat</h1>
         <p class='muted'>Peer to peer. No accounts.</p>
       </header>
       <ScreenAnnouncer screen={screen} />
@@ -343,8 +343,8 @@ export function App() {
         </div>
       )}
 
-      <main class={`page page-${screen}`}>
-        <div class='screen' tabIndex={-1} aria-label={title} ref={screenContentRef}>
+      <main class={`page page-${screen} flex min-w-0 flex-1 flex-col gap-5`}>
+        <div class='screen flex min-w-0 flex-col gap-5 outline-offset-4' tabIndex={-1} aria-label={title} ref={screenContentRef}>
           {screen === 'chats' && (
             <Chats
               contacts={contacts.filter((c) => !blocked.includes(c.id))}
@@ -403,18 +403,18 @@ export function App() {
         </div>
       </main>
 
-      <nav class='tabs' aria-label='Main'>
+      <nav class='tabs fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+0.5rem)] z-40 mx-auto flex w-auto max-w-md gap-1 rounded-2xl border border-base-300 bg-base-100/95 p-2 shadow-xl backdrop-blur md:static md:mt-auto md:w-fit md:max-w-none md:translate-x-0 md:shadow-sm' aria-label='Main'>
         {TABS.map(([key, text, icon]) =>
           screen === key ? (
-            <md-filled-button key={key} aria-current='page' onClick={() => setScreen(key)}>
-              <Icon name={icon} size={18} slot='icon' />
-              {text}
-            </md-filled-button>
+            <button class='btn btn-primary btn-sm min-h-11 flex-1 gap-2 px-2 sm:px-4' key={key} aria-current='page' onClick={() => setScreen(key)}>
+              <Icon name={icon} size={18} />
+              <span>{text}</span>
+            </button>
           ) : (
-            <md-text-button key={key} onClick={() => setScreen(key)}>
-              <Icon name={icon} size={18} slot='icon' />
-              {text}
-            </md-text-button>
+            <button class='btn btn-ghost btn-sm min-h-11 flex-1 gap-2 px-2 sm:px-4' key={key} onClick={() => setScreen(key)}>
+              <Icon name={icon} size={18} />
+              <span>{text}</span>
+            </button>
           )
         )}
       </nav>
