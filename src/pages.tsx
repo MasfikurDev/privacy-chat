@@ -3,7 +3,7 @@ import { HAS_TURN } from './config';
 import { exportBackup, formatId, type Identity } from './identity';
 import type { IncomingRequest } from './inbox';
 import type { Contact } from './store';
-import { Avatar, Icon, submitForm } from './ui';
+import { Avatar, Icon } from './ui';
 
 export interface Pending {
   key: number;
@@ -169,101 +169,6 @@ export function Chats(p: ChatsProps) {
 
       <p class='px-1 text-xs leading-5 text-base-content/60'>This list shows saved people, not stored conversation history. Messages are currently kept only for the active session.</p>
     </section>
-  );
-}
-
-interface HomeProps {
-  identity: Identity;
-  name: string;
-  online: boolean;
-  busy: boolean;
-  onName: (n: string) => void;
-  onDial: (raw: string) => void;
-  onInvite: () => void;
-}
-
-export function Home(p: HomeProps) {
-  const [target, setTarget] = useState('');
-  const [draftName, setDraftName] = useState('');
-  return (
-    <>
-      <IdCard identity={p.identity} name={p.name} />
-      <p class={p.online ? 'status on' : 'status off'}>
-        {p.online ? 'Online: people can reach you with your ID' : 'Appearing offline: nobody can reach you by ID'}
-      </p>
-
-      {!p.name && (
-        <section class='card home-name'>
-          <h2>Pick a display name</h2>
-          <p class='muted'>This is what people see when you contact them. You can change it any time.</p>
-          <div class='home-name-inner'>
-            <form
-              class='row'
-              onSubmit={(e) => {
-                e.preventDefault();
-                p.onName(draftName);
-              }}
-            >
-              <md-outlined-text-field
-                class='grow'
-                label='Display name'
-                aria-label='Display name'
-                value={draftName}
-                maxLength={32}
-                onInput={(e) => setDraftName(e.currentTarget.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    p.onName(draftName);
-                  }
-                }}
-              />
-              <md-filled-button onClick={submitForm}>Save</md-filled-button>
-            </form>
-          </div>
-        </section>
-      )}
-
-      <section class='card home-connect'>
-        <h2>Message or call someone</h2>
-        <p class='muted'>Enter their ID. They need to have the app open to receive your request.</p>
-        <div class='home-connect-inner'>
-          <form
-            class='row'
-            onSubmit={(e) => {
-              e.preventDefault();
-              p.onDial(target);
-            }}
-          >
-            <md-outlined-text-field
-              class='grow mono'
-              label='Their ID'
-              aria-label='Their ID'
-              value={target}
-              placeholder='XXXX-XXXX-XXXX-XXXX'
-              onInput={(e) => setTarget(e.currentTarget.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  p.onDial(target);
-                }
-              }}
-            />
-            <md-filled-button disabled={p.busy} onClick={submitForm}>
-              Connect
-            </md-filled-button>
-          </form>
-        </div>
-      </section>
-
-      <section class='card home-invite'>
-        <h2>No ID? Share a link</h2>
-        <p class='muted'>Create a private room and send the link through any app. It works once you both open it.</p>
-        <md-outlined-button onClick={p.onInvite}>
-          Create invite link
-        </md-outlined-button>
-      </section>
-    </>
   );
 }
 
