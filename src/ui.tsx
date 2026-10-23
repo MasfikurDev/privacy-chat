@@ -119,7 +119,11 @@ export type IconName =
   | 'download'
   | 'alert'
   | 'down'
-  | 'back';
+  | 'back'
+  | 'home'
+  | 'users'
+  | 'user'
+  | 'help';
 
 const ICON_PATHS: Record<IconName, string> = {
   mic: 'M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3zM19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8',
@@ -136,6 +140,10 @@ const ICON_PATHS: Record<IconName, string> = {
   alert: 'M10.29 3.86L1.82 18a2 2 0 0 1 1.71 3h16.94a2 2 0 0 1 1.71-3L13.71 3.86a2 2 0 0 1-3.42 0zM12 9v4M12 17h.01',
   down: 'M6 9l6 6 6-6',
   back: 'M19 12H5M12 19l-7-7 7-7',
+  home: 'M3 10.5L12 3l9 7.5M5.5 9v11h13V9M9 20v-6h6v6',
+  users: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75',
+  user: 'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8',
+  help: 'M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0',
 };
 
 export function Icon({
