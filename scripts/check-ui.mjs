@@ -64,7 +64,8 @@ for (const file of files.filter((f) => f.endsWith('.css'))) {
 
 for (const file of files.filter((f) => f.endsWith('.tsx'))) {
   const src = readFileSync(file, 'utf8');
-  if (src.includes("style='") || src.includes('style="')) fail(file, 'inline style attributes are blocked by the CSP; use a class or a style object');
+  if (src.includes("style='") || src.includes('style="')) fail(file, 'inline style attributes are blocked by the CSP; use a class instead');
+  if (src.includes('style={{')) fail(file, 'inline style objects may be blocked by the CSP; use a CSS class instead');
   if (src.includes('dangerouslySetInnerHTML') || src.includes('innerHTML')) fail(file, 'never inject HTML; render text through JSX');
   if (src.includes('http://') || src.includes('https://')) fail(file, 'no external URLs in components');
   let at = src.indexOf('<img');
