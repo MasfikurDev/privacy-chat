@@ -2,9 +2,9 @@
 
 ## Project and commands
 - This is a Preact + TypeScript single-page app built with Vite and the PWA plugin. Read [README.md](README.md) for product behavior and deployment details.
-- Use pnpm, not npm: the checked-in lockfile is `pnpm-lock.yaml`, and CI uses Node 20 with pnpm 10. The README's npm install/`package-lock.json` instructions are stale; do not generate or commit an npm lockfile.
+- Use pnpm, not npm: the checked-in lockfile is `pnpm-lock.yaml`, and CI uses Node 22 with pnpm 10.34.7. The README's npm install/`package-lock.json` instructions are stale; do not generate or commit an npm lockfile.
 - Common commands: `pnpm install --frozen-lockfile`, `pnpm run dev`, `pnpm run typecheck`, `pnpm run build`, and `pnpm run audit`.
-- There is no test script or test suite currently. `dev` and `build` run `scripts/make-icons.mjs`; account for generated icon changes when using them.
+- The project has Playwright end-to-end tests in `tests/`; `pnpm run test:e2e` runs them, while the public-network real P2P test is opt-in via `RUN_REAL_P2P_E2E=1`. CI runs typecheck, the UI guard, build, browser tests, and the dependency audit. `dev` and `build` run `scripts/make-icons.mjs`; account for generated icon changes when using them.
 
 ## Architecture
 - `src/main.tsx` mounts the app; `src/App.tsx` coordinates identity, navigation, contacts, inbox requests, and chat transitions.
