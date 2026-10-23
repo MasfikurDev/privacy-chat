@@ -159,7 +159,11 @@ export function Contacts(p: ContactsProps) {
   const [rawId, setRawId] = useState('');
   const [nick, setNick] = useState('');
   const [error, setError] = useState('');
-  const sorted = [...p.contacts].sort((a, b) => label(a).localeCompare(label(b)));
+  const [query, setQuery] = useState('');
+  const normalizedQuery = query.trim().toLocaleLowerCase();
+  const sorted = [...p.contacts]
+    .filter((c) => !normalizedQuery || label(c).toLocaleLowerCase().includes(normalizedQuery) || formatId(c.id).toLocaleLowerCase().includes(normalizedQuery))
+    .sort((a, b) => label(a).localeCompare(label(b)));
 
   const add = (e: Event) => {
     e.preventDefault();
@@ -179,7 +183,15 @@ export function Contacts(p: ContactsProps) {
     <>
       <section class='card'>
         <h2>Contacts</h2>
-        {sorted.length === 0 && <p class='muted'>No contacts yet. Add one below, or save someone after you chat.</p>}
+        <md-outlined-text-field
+          class='contacts-search'
+          label='Search contacts'
+          aria-label='Search contacts'
+          value={query}
+          onInput={(e) => setQuery(e.currentTarget.value)}
+        />
+        {p.contacts.length === 0 && <p class='muted'>No contacts yet. Add one below, or save someone after you chat.</p>}
+        {p.contacts.length > 0 && sorted.length === 0 && <p class='muted' role='status'>No contacts match “{query.trim()}”.</p>}
         <ul class='list contacts-list'>
           {sorted.map((c) => (
             <li class='contact-item' key={c.id}>
