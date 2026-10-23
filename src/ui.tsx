@@ -11,8 +11,7 @@ export function Avatar({ id, label, size }: { id: string; label: string; size?: 
   const initial = Array.from(label.trim())[0]?.toUpperCase() ?? '?';
   return (
     <span
-      class={size === 'lg' ? 'avatar avatar-lg' : 'avatar'}
-      style={{ background: `hsl(${hue(id)} 45% 36%)` }}
+      class={`avatar grid shrink-0 place-items-center rounded-full font-semibold ${size === 'lg' ? 'size-16 text-xl' : 'size-12 text-base'} avatar-tone-${Math.floor(hue(id) / 60)}`}
       aria-hidden='true'
     >
       {initial}
@@ -119,7 +118,16 @@ export type IconName =
   | 'download'
   | 'alert'
   | 'down'
-  | 'back';
+  | 'back'
+  | 'home'
+  | 'users'
+  | 'user'
+  | 'help'
+  | 'message'
+  | 'plus'
+  | 'search'
+  | 'link'
+  | 'chevron-right';
 
 const ICON_PATHS: Record<IconName, string> = {
   mic: 'M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3zM19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8',
@@ -136,6 +144,15 @@ const ICON_PATHS: Record<IconName, string> = {
   alert: 'M10.29 3.86L1.82 18a2 2 0 0 1 1.71 3h16.94a2 2 0 0 1 1.71-3L13.71 3.86a2 2 0 0 1-3.42 0zM12 9v4M12 17h.01',
   down: 'M6 9l6 6 6-6',
   back: 'M19 12H5M12 19l-7-7 7-7',
+  home: 'M3 10.5L12 3l9 7.5M5.5 9v11h13V9M9 20v-6h6v6',
+  users: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75',
+  user: 'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8',
+  help: 'M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0',
+  message: 'M21 11.5a8.5 8.5 0 0 1-8.5 8.5 9 9 0 0 1-4-.9L3 21l1.9-5.5a9 9 0 0 1-.9-4A8.5 8.5 0 0 1 12.5 3H13a8.5 8.5 0 0 1 8 8.5z',
+  plus: 'M12 5v14M5 12h14',
+  search: 'M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16zM21 21l-4.35-4.35',
+  link: 'M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71',
+  'chevron-right': 'M9 18l6-6-6-6',
 };
 
 export function Icon({

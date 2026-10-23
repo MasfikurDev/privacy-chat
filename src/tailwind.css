@@ -1,0 +1,60 @@
+@import './style.css' layer(legacy);
+@import './mobile-first.css' layer(legacy);
+@import './ui-fixes.css' layer(legacy);
+@import 'tailwindcss';
+
+@plugin "daisyui" {
+  themes: false;
+}
+
+@plugin "daisyui/theme" {
+  name: "privacy";
+  default: true;
+  prefersdark: true;
+  color-scheme: light dark;
+
+  --color-base-100: var(--md-sys-color-surface);
+  --color-base-200: var(--md-sys-color-surface-container-low);
+  --color-base-300: var(--md-sys-color-outline-variant);
+  --color-base-content: var(--md-sys-color-on-surface);
+  --color-primary: var(--md-sys-color-primary);
+  --color-primary-content: var(--md-sys-color-on-primary);
+  --color-secondary: var(--md-sys-color-secondary-container);
+  --color-secondary-content: var(--md-sys-color-on-secondary-container);
+  --color-accent: var(--md-sys-color-tertiary);
+  --color-accent-content: var(--md-sys-color-on-tertiary);
+  --color-neutral: var(--md-sys-color-surface-container-high);
+  --color-neutral-content: var(--md-sys-color-on-surface-variant);
+  --color-info: var(--md-sys-color-tertiary-container);
+  --color-info-content: var(--md-sys-color-on-tertiary-container);
+  --color-success: var(--md-sys-color-success-container);
+  --color-success-content: var(--md-sys-color-on-success-container);
+  --color-warning: var(--md-sys-color-tertiary-container);
+  --color-warning-content: var(--md-sys-color-on-tertiary-container);
+  --color-error: var(--md-sys-color-error);
+  --color-error-content: var(--md-sys-color-on-error);
+
+  --radius-selector: 1rem;
+  --radius-field: 0.75rem;
+  --radius-box: 1rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
+}
+
+/*
+ * Migration bridge:
+ * - Existing screens remain in the lower-priority legacy layer for now.
+ * - New screens use Tailwind utilities and daisyUI components.
+ * - Remove legacy imports as each screen is migrated and validated.
+ */
+
+/* Deterministic avatar colors without inline styles, compatible with strict CSP. */
+.avatar-tone-0 { background-color: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); }
+.avatar-tone-1 { background-color: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); }
+.avatar-tone-2 { background-color: var(--md-sys-color-tertiary-container); color: var(--md-sys-color-on-tertiary-container); }
+.avatar-tone-3 { background-color: var(--md-sys-color-success-container); color: var(--md-sys-color-on-success-container); }
+.avatar-tone-4 { background-color: var(--md-sys-color-error-container); color: var(--md-sys-color-on-error-container); }
+.avatar-tone-5 { background-color: var(--md-sys-color-surface-container-high); color: var(--md-sys-color-on-surface); }

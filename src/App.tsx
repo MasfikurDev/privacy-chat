@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import { Chat } from './Chat';
 import { formatId, importBackup, loadIdentity, normalizeId, resetIdentity, type Identity } from './identity';
 import { dial, listenInbox, type Peer } from './inbox';
-import { Contacts, Help, Home, Profile, type Pending } from './pages';
+import { Chats, Contacts, Help, Profile, type Pending } from './pages';
 import { RequestDialog } from './RequestDialog';
+import { Icon, type IconName } from './ui';
 import { createSecret } from './room';
 import {
   cleanName,
@@ -21,19 +22,18 @@ import {
   type Contact
 } from './store';
 
-type Screen = 'home' | 'contacts' | 'profile' | 'help';
+type Screen = 'chats' | 'contacts' | 'profile' | 'help';
 
-const TABS: [Screen, string][] = [
-  ['home', 'Home'],
-  ['contacts', 'Contacts'],
-  ['profile', 'Profile'],
-  ['help', 'Help']
+const TABS: [Screen, string, IconName][] = [
+  ['chats', 'Chats', 'message'],
+  ['contacts', 'Contacts', 'users'],
+  ['profile', 'Settings', 'user'],
 ];
 
 const SCREEN_TITLES: Record<Screen, string> = {
-  home: 'Home',
+  chats: 'Chats',
   contacts: 'Contacts',
-  profile: 'Profile',
+  profile: 'Settings',
   help: 'Help'
 };
 
@@ -68,7 +68,7 @@ export function App() {
   const initial = location.hash.slice(1);
   const [identity, setIdentity] = useState<Identity | null>(null);
   const [setupError, setSetupError] = useState('');
-  const [screen, setScreen] = useState<Screen>('home');
+  const [screen, setScreen] = useState<Screen>('chats');
   const [chat, setChat] = useState<{ secret: string; peer?: Peer } | null>(initial ? { secret: initial } : null);
   const [name, setNameState] = useState(getName());
   const [contacts, setContacts] = useState<Contact[]>(getContacts());
@@ -275,7 +275,7 @@ export function App() {
     const peer = chat.peer;
     const saved = !!peer && contacts.some((c) => c.id === peer.id);
     return (
-      <div class='app app-chat'>
+      <div class='app app-chat flex h-dvh min-h-0 w-full flex-col gap-0 overflow-hidden p-0'>
         <Chat
           key={chat.secret}
           secret={chat.secret}
@@ -292,7 +292,7 @@ export function App() {
 
   if (setupError) {
     return (
-      <div class='app'>
+      <div class='app mx-auto flex min-h-dvh w-full max-w-5xl flex-col gap-5 px-4 pt-[calc(env(safe-area-inset-top)_+_1rem)] pb-[calc(env(safe-area-inset-bottom)_+_7rem)] md:px-8 md:pb-[calc(env(safe-area-inset-bottom)_+_2rem)]'>
         <main class='page'>
           <section class='card'>
             <h2>Could not set up your ID</h2>
@@ -308,7 +308,7 @@ export function App() {
 
   if (!identity) {
     return (
-      <div class='app'>
+      <div class='app mx-auto flex min-h-dvh w-full max-w-5xl flex-col gap-5 px-4 pt-[calc(env(safe-area-inset-top)_+_1rem)] pb-[calc(env(safe-area-inset-bottom)_+_7rem)] md:px-8 md:pb-[calc(env(safe-area-inset-bottom)_+_2rem)]'>
         <main class='page'>
           <p role='status'>Setting up your private ID�</p>
         </main>
@@ -317,9 +317,9 @@ export function App() {
   }
 
   return (
-    <div class='app'>
-      <header class='top'>
-        <h1>Privacy Chat</h1>
+    <div class='app mx-auto flex min-h-dvh w-full max-w-5xl flex-col gap-5 px-4 pt-[calc(env(safe-area-inset-top)_+_1rem)] pb-[calc(env(safe-area-inset-bottom)_+_7rem)] md:px-8 md:pb-[calc(env(safe-area-inset-bottom)_+_2rem)]'>
+      <header class='top flex flex-col gap-1 px-1'>
+        <h1 class='text-2xl font-bold tracking-tight sm:text-3xl'>Privacy Chat</h1>
         <p class='muted'>Peer to peer. No accounts.</p>
       </header>
       <ScreenAnnouncer screen={screen} />
@@ -343,18 +343,13 @@ export function App() {
         </div>
       )}
 
-      <main class={`page page-${screen}`}>
-        <div class='screen' tabIndex={-1} aria-label={title} ref={screenContentRef}>
-          {screen === 'home' && (
-            <Home
-              identity={identity}
-              name={name}
-              online={online}
+      <main class={`page page-${screen} flex min-w-0 flex-1 flex-col gap-5`}>
+        <div class='screen flex min-w-0 flex-col gap-5 outline-offset-4' tabIndex={-1} aria-label={title} ref={screenContentRef}>
+          {screen === 'chats' && (
+            <Chats
+              contacts={contacts.filter((c) => !blocked.includes(c.id))}
               busy={!!dialing}
-              onName={(n) => {
-                setName(n);
-                setNameState(getName());
-              }}
+              onMessage={startDial}
               onDial={startDial}
               onInvite={() => openChat(createSecret())}
             />
@@ -401,22 +396,25 @@ export function App() {
               }}
               onImport={importIdentity}
               onReset={newIdentity}
+              onHelp={() => setScreen('help')}
             />
           )}
           {screen === 'help' && <Help />}
         </div>
       </main>
 
-      <nav class='tabs' aria-label='Main'>
-        {TABS.map(([key, text]) =>
+      <nav class='fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom)_+_0.5rem)] z-40 mx-auto flex w-auto max-w-md translate-x-0 transform-none gap-1 rounded-2xl border border-base-300 bg-base-100/95 p-2 shadow-xl backdrop-blur md:static md:mt-auto md:w-fit md:max-w-none md:shadow-sm' aria-label='Main'>
+        {TABS.map(([key, text, icon]) =>
           screen === key ? (
-            <md-filled-button key={key} aria-current='page' onClick={() => setScreen(key)}>
-              {text}
-            </md-filled-button>
+            <button class='btn btn-primary btn-sm min-h-11 flex-1 gap-2 px-2 sm:px-4' key={key} aria-current='page' onClick={() => setScreen(key)}>
+              <Icon name={icon} size={18} />
+              <span>{text}</span>
+            </button>
           ) : (
-            <md-text-button key={key} onClick={() => setScreen(key)}>
-              {text}
-            </md-text-button>
+            <button class='btn btn-ghost btn-sm min-h-11 flex-1 gap-2 px-2 sm:px-4' key={key} onClick={() => setScreen(key)}>
+              <Icon name={icon} size={18} />
+              <span>{text}</span>
+            </button>
           )
         )}
       </nav>

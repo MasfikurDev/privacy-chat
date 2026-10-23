@@ -5,7 +5,8 @@ import '@fontsource/roboto/latin-400.css';
 import '@fontsource/roboto/latin-500.css';
 import '@fontsource/roboto/latin-700.css';
 import './material';
-import './style.css';
+import './theme.css';
+import './tailwind.css';
 
 render(
   <>

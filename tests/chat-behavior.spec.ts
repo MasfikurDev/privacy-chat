@@ -4,8 +4,11 @@ test("composer stays in viewport and message list scrolls internally on mobile",
   // Regression guard: composer must remain accessible (not pushed off-screen or blocked by overlays).
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
+  await page.getByRole("button", { name: "Settings" }).click();
   await expect(page.locator(".id-code")).toBeVisible();
-  await page.getByRole("button", { name: "Create invite link" }).click();
+  await page.getByRole("button", { name: "Chats" }).click();
+  await page.getByRole("button", { name: "New chat" }).click();
+  await page.getByRole("button", { name: "Create invite" }).click();
 
   await expect(page.getByRole("button", { name: "Copy invite link" }).first()).toBeVisible();
   await expect(page.getByText("Your conversation starts here")).toBeVisible();
@@ -47,8 +50,11 @@ test("install banner does not block taps on page content", async ({ page }) => {
   // Regression guard: install banner used to sit on top and swallow clicks on "Create invite link".
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
+  await page.getByRole("button", { name: "Settings" }).click();
   await expect(page.locator(".id-code")).toBeVisible();
-  await page.getByRole("button", { name: "Create invite link" }).click({ timeout: 5000 });
+  await page.getByRole("button", { name: "Chats" }).click();
+  await page.getByRole("button", { name: "New chat" }).click();
+  await page.getByRole("button", { name: "Create invite" }).click({ timeout: 5000 });
   await expect(page.getByRole("button", { name: "Copy invite link" }).first()).toBeVisible();
 });
 
@@ -56,8 +62,11 @@ test("message list is a log region and composer is a real textbox", async ({ pag
   // Regression guard: ensure chat accessibility/semantics are correct.
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
+  await page.getByRole("button", { name: "Settings" }).click();
   await expect(page.locator(".id-code")).toBeVisible();
-  await page.getByRole("button", { name: "Create invite link" }).click();
+  await page.getByRole("button", { name: "Chats" }).click();
+  await page.getByRole("button", { name: "New chat" }).click();
+  await page.getByRole("button", { name: "Create invite" }).click();
 
   await expect(page.locator(".msgs")).toHaveAttribute("role", "log");
   const composer = page.getByRole("textbox", { name: "Message" });
@@ -71,8 +80,11 @@ test("timestamps and day separators", async ({ page }) => {
   // Regression guard: messages should render time metadata and carry expected classes.
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
+  await page.getByRole("button", { name: "Settings" }).click();
   await expect(page.locator(".id-code")).toBeVisible();
-  await page.getByRole("button", { name: "Create invite link" }).click();
+  await page.getByRole("button", { name: "Chats" }).click();
+  await page.getByRole("button", { name: "New chat" }).click();
+  await page.getByRole("button", { name: "Create invite" }).click();
   await expect(page.getByText("Your conversation starts here")).toBeVisible();
 
   const hasMsg = await page.evaluate(() => {
@@ -93,6 +105,7 @@ test("contact row actions", async ({ page }) => {
   // Regression guard: contact actions must be accessible with adequate tap targets.
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
+  await page.getByRole("button", { name: "Settings" }).click();
   await expect(page.locator(".id-code")).toBeVisible();
 
   await page.getByRole("button", { name: "Contacts" }).click();
