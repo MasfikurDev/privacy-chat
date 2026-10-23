@@ -72,85 +72,104 @@ export function Chats(p: ChatsProps) {
   };
 
   return (
-    <section class='chat-list-screen' aria-label='Chats'>
-      <div class='chat-list-toolbar'>
-        <div>
-          <p class='eyebrow'>Private by design</p>
-          <h2>Chats</h2>
+    <section class='mx-auto flex w-full max-w-5xl min-w-0 flex-col gap-5' aria-label='Chats'>
+      <div class='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
+        <div class='min-w-0 space-y-1'>
+          <p class='text-xs font-semibold uppercase tracking-[0.16em] text-base-content/60'>Private by design</p>
+          <h2 class='text-3xl font-bold tracking-tight sm:text-4xl'>Chats</h2>
         </div>
-        <md-filled-button class='new-chat-button' disabled={p.busy} onClick={() => setShowNewChat((v) => !v)}>
-          <Icon name='plus' size={18} slot='icon' />
+        <button class='btn btn-primary min-h-12 w-full gap-2 sm:w-auto' disabled={p.busy} onClick={() => setShowNewChat((v) => !v)}>
+          <Icon name='plus' size={18} />
           New chat
-        </md-filled-button>
+        </button>
       </div>
 
-      <md-outlined-text-field
-        class='chat-search'
-        label='Search people'
-        aria-label='Search people'
-        value={query}
-        onInput={(e) => setQuery(e.currentTarget.value)}
-      >
-        <Icon name='search' size={18} slot='leading-icon' />
-      </md-outlined-text-field>
+      <label class='input input-bordered flex min-h-12 w-full items-center gap-3 rounded-2xl'>
+        <Icon name='search' size={18} />
+        <input
+          class='grow bg-transparent outline-none'
+          type='search'
+          aria-label='Search people'
+          placeholder='Search people'
+          value={query}
+          onInput={(e) => setQuery(e.currentTarget.value)}
+        />
+      </label>
 
       {showNewChat && (
-        <section class='new-chat-panel' aria-label='Start a new chat'>
-          <h3>Start a private chat</h3>
-          <p class='muted'>Enter someone’s Privacy Chat ID. They need the app open to receive your request.</p>
-          <form class='new-chat-form' onSubmit={start}>
-            <md-outlined-text-field
-              class='grow mono'
-              label='Their ID'
-              aria-label='Their ID'
-              placeholder='XXXX-XXXX-XXXX-XXXX'
-              value={target}
-              onInput={(e) => setTarget(e.currentTarget.value)}
-            />
-            <md-filled-button disabled={p.busy} onClick={submitForm}>Connect</md-filled-button>
-          </form>
-          <div class='new-chat-footer'>
-            <span class='muted'>Or invite someone with a one-time link.</span>
-            <md-text-button onClick={p.onInvite}>
-              <Icon name='link' size={16} slot='icon' />
-              Create invite
-            </md-text-button>
+        <section class='card border border-base-300 bg-base-100 shadow-sm' aria-label='Start a new chat'>
+          <div class='card-body gap-4 p-4 sm:p-6'>
+            <div class='space-y-1'>
+              <h3 class='card-title text-lg'>Start a private chat</h3>
+              <p class='text-sm text-base-content/70'>Enter someone’s Privacy Chat ID. They need the app open to receive your request.</p>
+            </div>
+            <form class='flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start' onSubmit={start}>
+              <input
+                class='input input-bordered min-h-12 w-full min-w-0 font-mono sm:flex-1'
+                aria-label='Their ID'
+                placeholder='XXXX-XXXX-XXXX-XXXX'
+                value={target}
+                onInput={(e) => setTarget(e.currentTarget.value)}
+              />
+              <button class='btn btn-primary min-h-12 w-full sm:w-auto' type='submit' disabled={p.busy}>Connect</button>
+            </form>
+            <div class='flex flex-col gap-2 border-t border-base-300 pt-3 sm:flex-row sm:items-center sm:justify-between'>
+              <span class='text-sm text-base-content/70'>Or invite someone with a one-time link.</span>
+              <button class='btn btn-ghost min-h-11 self-start gap-2' type='button' onClick={p.onInvite}>
+                <Icon name='link' size={16} />
+                Create invite
+              </button>
+            </div>
           </div>
         </section>
       )}
 
       {p.contacts.length === 0 ? (
-        <div class='chat-list-empty'>
-          <div class='chat-empty-icon'><Icon name='message' size={28} /></div>
-          <h3>Your private chats start here</h3>
-          <p class='muted'>Add someone by their ID or create an invite link. People are not shown as online unless a live connection confirms it.</p>
-          {!showNewChat && (
-            <md-filled-button onClick={() => setShowNewChat(true)}>
-              <Icon name='plus' size={18} slot='icon' />
-              Start your first chat
-            </md-filled-button>
-          )}
+        <div class='card border border-dashed border-base-300 bg-base-100 shadow-sm'>
+          <div class='card-body items-center gap-4 px-5 py-12 text-center sm:py-16'>
+            <div class='grid size-14 place-items-center rounded-2xl bg-primary/10 text-primary'>
+              <Icon name='message' size={28} />
+            </div>
+            <div class='max-w-md space-y-2'>
+              <h3 class='text-xl font-semibold'>Your private chats start here</h3>
+              <p class='text-sm leading-6 text-base-content/70'>Add someone by their ID or create an invite link. People are not shown as online unless a live connection confirms it.</p>
+            </div>
+            {!showNewChat && (
+              <button class='btn btn-primary min-h-12 gap-2' onClick={() => setShowNewChat(true)}>
+                <Icon name='plus' size={18} />
+                Start your first chat
+              </button>
+            )}
+          </div>
         </div>
       ) : sorted.length === 0 ? (
-        <p class='chat-list-empty-note' role='status'>No people match “{query.trim()}”.</p>
+        <p class='rounded-xl bg-base-200 px-4 py-3 text-sm text-base-content/70' role='status'>No people match “{query.trim()}”.</p>
       ) : (
-        <ul class='chat-list'>
+        <ul class='divide-y divide-base-300 overflow-hidden rounded-2xl border border-base-300 bg-base-100'>
           {sorted.map((c) => (
-            <li class='chat-list-item' key={c.id}>
-              <button class='chat-list-open' type='button' disabled={p.busy} onClick={() => p.onMessage(c.id)} aria-label={`Message ${label(c)}`}>
-                <Avatar id={c.id} label={label(c)} />
-                <span class='chat-list-copy'>
-                  <strong>{label(c)}</strong>
-                  <span class='chat-list-preview'>{formatId(c.id)}</span>
+            <li key={c.id}>
+              <button
+                class='group flex min-h-[76px] w-full min-w-0 items-center gap-3 p-3 text-left transition-colors hover:bg-base-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary disabled:cursor-wait disabled:opacity-50 sm:gap-4 sm:p-4'
+                type='button'
+                disabled={p.busy}
+                onClick={() => p.onMessage(c.id)}
+                aria-label={`Message ${label(c)}`}
+              >
+                <span class='shrink-0'><Avatar id={c.id} label={label(c)} /></span>
+                <span class='flex min-w-0 flex-1 flex-col gap-1'>
+                  <strong class='break-words text-base font-semibold'>{label(c)}</strong>
+                  <span class='break-all text-sm text-base-content/60'>{formatId(c.id)}</span>
                 </span>
-                <span class='chat-list-action'><Icon name='chevron-right' size={18} /></span>
+                <span class='shrink-0 text-base-content/50 transition-transform group-hover:translate-x-0.5'>
+                  <Icon name='chevron-right' size={18} />
+                </span>
               </button>
             </li>
           ))}
         </ul>
       )}
 
-      <p class='chat-list-disclaimer'>This list shows saved people, not stored conversation history. Messages are currently kept only for the active session.</p>
+      <p class='px-1 text-xs leading-5 text-base-content/60'>This list shows saved people, not stored conversation history. Messages are currently kept only for the active session.</p>
     </section>
   );
 }
