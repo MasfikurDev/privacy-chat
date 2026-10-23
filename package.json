@@ -6,7 +6,7 @@
   "packageManager": "pnpm@10.34.7",
   "scripts": {
     "dev": "node scripts/make-icons.mjs && node scripts/make-theme.mjs && vite",
-    "build": "node scripts/make-icons.mjs && node scripts/make-theme.mjs && tsc --noEmit && vite build",
+    "build": "node scripts/check-ui.mjs && node scripts/make-icons.mjs && node scripts/make-theme.mjs && tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "theme": "node scripts/make-theme.mjs",
