@@ -141,7 +141,7 @@
   background: var(--md-sys-color-surface-container-high);
   border: 1px solid var(--md-sys-color-outline-variant);
   border-radius: 1.5rem;
-  box-shadow: 0 6px 24px rgb(0 0 0 / 12%);
+  box-shadow: var(--shadow);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
 }
