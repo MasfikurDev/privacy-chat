@@ -408,7 +408,7 @@ export function Chat({ secret, peer, relayOnly, saved, onSave, onLeave }: ChatPr
           />
           <p class='px-1 pt-1 text-right text-xs text-base-content/50' aria-hidden='true'>{draft.length} / {MAX_MESSAGE_LENGTH}</p>
         </div>
-        <button class='btn btn-primary mb-1 min-h-11 gap-2' type='submit' disabled={!draft.trim() || peers === 0}>
+        <button class='btn btn-primary mb-1 min-h-11 gap-2' type='submit' aria-label='Send' disabled={!draft.trim() || peers === 0}>
           <Icon name='send' size={18} />
           <span class='hidden sm:inline'>Send</span>
         </button>
