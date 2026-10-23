@@ -9,10 +9,10 @@ export function hue(id: string): number {
 
 export function Avatar({ id, label, size }: { id: string; label: string; size?: 'lg' }) {
   const initial = Array.from(label.trim())[0]?.toUpperCase() ?? '?';
+  const tone = Math.floor(hue(id) / 90);
   return (
     <span
-      class={size === 'lg' ? 'avatar avatar-lg' : 'avatar'}
-      style={{ background: `hsl(${hue(id)} 45% 36%)` }}
+      class={`avatar avatar-tone-${tone}${size === 'lg' ? ' avatar-lg' : ''}`}
       aria-hidden='true'
     >
       {initial}

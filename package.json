@@ -4,9 +4,15 @@
   "version": "0.1.0",
   "type": "module",
   "packageManager": "pnpm@10.34.7",
+  "pnpm": {
+    "overrides": {
+      "@grpc/grpc-js": "^1.14.6",
+      "@libp2p/peer-store": "^12.0.32"
+    }
+  },
   "scripts": {
     "dev": "node scripts/make-icons.mjs && node scripts/make-theme.mjs && vite",
-    "build": "node scripts/make-icons.mjs && node scripts/make-theme.mjs && tsc --noEmit && vite build",
+    "build": "node scripts/check-ui.mjs && node scripts/make-icons.mjs && node scripts/make-theme.mjs && tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "theme": "node scripts/make-theme.mjs",
@@ -26,7 +32,7 @@
     "@playwright/test": "^1.64.1",
     "@preact/preset-vite": "2.10.6",
     "typescript": "5.6.3",
-    "vite": "5.4.11",
-    "vite-plugin-pwa": "0.21.0"
+    "vite": "6.4.4",
+    "vite-plugin-pwa": "0.21.2"
   }
 }
