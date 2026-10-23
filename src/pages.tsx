@@ -48,6 +48,113 @@ function IdCard({ identity, name }: { identity: Identity; name: string }) {
   );
 }
 
+interface ChatsProps {
+  contacts: Contact[];
+  busy: boolean;
+  onMessage: (id: string) => void;
+  onDial: (raw: string) => void;
+  onInvite: () => void;
+}
+
+export function Chats(p: ChatsProps) {
+  const [query, setQuery] = useState('');
+  const [target, setTarget] = useState('');
+  const [showNewChat, setShowNewChat] = useState(false);
+  const normalizedQuery = query.trim().toLocaleLowerCase();
+  const sorted = [...p.contacts]
+    .filter((c) => !normalizedQuery || label(c).toLocaleLowerCase().includes(normalizedQuery) || formatId(c.id).toLocaleLowerCase().includes(normalizedQuery))
+    .sort((a, b) => label(a).localeCompare(label(b)));
+
+  const start = (e: Event) => {
+    e.preventDefault();
+    if (!target.trim() || p.busy) return;
+    p.onDial(target);
+  };
+
+  return (
+    <section class='chat-list-screen' aria-label='Chats'>
+      <div class='chat-list-toolbar'>
+        <div>
+          <p class='eyebrow'>Private by design</p>
+          <h2>Chats</h2>
+        </div>
+        <md-filled-button class='new-chat-button' disabled={p.busy} onClick={() => setShowNewChat((v) => !v)}>
+          <Icon name='plus' size={18} slot='icon' />
+          New chat
+        </md-filled-button>
+      </div>
+
+      <md-outlined-text-field
+        class='chat-search'
+        label='Search people'
+        aria-label='Search people'
+        value={query}
+        onInput={(e) => setQuery(e.currentTarget.value)}
+      >
+        <Icon name='search' size={18} slot='leading-icon' />
+      </md-outlined-text-field>
+
+      {showNewChat && (
+        <section class='new-chat-panel' aria-label='Start a new chat'>
+          <h3>Start a private chat</h3>
+          <p class='muted'>Enter someone’s Privacy Chat ID. They need the app open to receive your request.</p>
+          <form class='new-chat-form' onSubmit={start}>
+            <md-outlined-text-field
+              class='grow mono'
+              label='Their ID'
+              aria-label='Their ID'
+              placeholder='XXXX-XXXX-XXXX-XXXX'
+              value={target}
+              onInput={(e) => setTarget(e.currentTarget.value)}
+            />
+            <md-filled-button disabled={p.busy} onClick={submitForm}>Connect</md-filled-button>
+          </form>
+          <div class='new-chat-footer'>
+            <span class='muted'>Or invite someone with a one-time link.</span>
+            <md-text-button onClick={p.onInvite}>
+              <Icon name='link' size={16} slot='icon' />
+              Create invite
+            </md-text-button>
+          </div>
+        </section>
+      )}
+
+      {p.contacts.length === 0 ? (
+        <div class='chat-list-empty'>
+          <div class='chat-empty-icon'><Icon name='message' size={28} /></div>
+          <h3>Your private chats start here</h3>
+          <p class='muted'>Add someone by their ID or create an invite link. People are not shown as online unless a live connection confirms it.</p>
+          {!showNewChat && (
+            <md-filled-button onClick={() => setShowNewChat(true)}>
+              <Icon name='plus' size={18} slot='icon' />
+              Start your first chat
+            </md-filled-button>
+          )}
+        </div>
+      ) : sorted.length === 0 ? (
+        <p class='chat-list-empty-note' role='status'>No people match “{query.trim()}”.</p>
+      ) : (
+        <ul class='chat-list'>
+          {sorted.map((c) => (
+            <li class='chat-list-item' key={c.id}>
+              <button class='chat-list-open' type='button' disabled={p.busy} onClick={() => p.onMessage(c.id)} aria-label={`Message ${label(c)}`}>
+                <Avatar id={c.id} label={label(c)} />
+                <span class='chat-list-copy'>
+                  <strong>{label(c)}</strong>
+                  <span class='chat-list-preview'>{formatId(c.id)}</span>
+                </span>
+                <span class='chat-list-action'><Icon name='chevron-right' size={18} /></span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <p class='chat-list-disclaimer'>This list shows saved people, not stored conversation history. Messages are currently kept only for the active session.</p>
+    </section>
+  );
+}
+
 interface HomeProps {
   identity: Identity;
   name: string;
@@ -302,6 +409,7 @@ interface ProfileProps {
   onRelayOnly: (v: boolean) => void;
   onImport: (json: string) => Promise<void>;
   onReset: () => void;
+  onHelp: () => void;
 }
 
 export function Profile(p: ProfileProps) {
@@ -380,6 +488,17 @@ export function Profile(p: ProfileProps) {
           disabled={!HAS_TURN}
           onChange={p.onRelayOnly}
         />
+      </section>
+
+      <section class='card profile-help'>
+        <div class='profile-help-copy'>
+          <h2>Help & privacy</h2>
+          <p class='muted'>How peer-to-peer connections work, what stays on this device, and what the network can see.</p>
+        </div>
+        <md-outlined-button onClick={p.onHelp}>
+          <Icon name='help' size={18} slot='icon' />
+          Open help
+        </md-outlined-button>
       </section>
 
       <section class='card profile-backup'>
