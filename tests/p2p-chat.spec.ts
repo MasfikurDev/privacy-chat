@@ -18,6 +18,9 @@ test('peers have unique IDs, connect through an invite, and exchange messages', 
 
     await Promise.all([pageA.goto('/'), pageB.goto('/')]);
 
+    await pageA.getByRole('button', { name: 'Settings' }).click();
+    await pageB.getByRole('button', { name: 'Settings' }).click();
+
     const idA = pageA.locator('.id-code');
     const idB = pageB.locator('.id-code');
     await expect(idA).toHaveText(ID_FORMAT);
@@ -28,11 +31,15 @@ test('peers have unique IDs, connect through an invite, and exchange messages', 
     expect(peerAId).not.toBe(peerBId);
 
     await pageA.reload();
+    await pageA.getByRole('button', { name: 'Settings' }).click();
     await expect(pageA.locator('.id-code')).toHaveText(peerAId);
     await pageB.reload();
+    await pageB.getByRole('button', { name: 'Settings' }).click();
     await expect(pageB.locator('.id-code')).toHaveText(peerBId);
 
-    await pageA.getByRole('button', { name: 'Create invite link' }).click();
+    await pageA.getByRole('button', { name: 'Chats' }).click();
+    await pageA.getByRole('button', { name: 'New chat' }).click();
+    await pageA.getByRole('button', { name: 'Create invite' }).click();
     await expect(pageA.getByRole('button', { name: 'Copy invite link' })).toBeVisible();
 
     const inviteUrl = pageA.url();
