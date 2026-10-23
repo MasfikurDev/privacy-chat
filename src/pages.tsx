@@ -27,20 +27,18 @@ function IdCard({ identity, name }: { identity: Identity; name: string }) {
       .catch(() => undefined);
   };
   return (
-    <section class='card id-card'>
-      <div class='id-card-inner'>
-        <p class='eyebrow'>Your ID</p>
-        <p class='id-code'>{text}</p>
-        <p class='muted'>{name ? `People see you as ${name}.` : 'Set a display name so people know it is you.'}</p>
-        <div class='row id-card-actions'>
-          <md-filled-button onClick={copy}>
-            {copied && <Icon name='check' size={16} slot='icon' />}
+    <section class='card border border-primary/20 bg-primary/5 shadow-sm'>
+      <div class='card-body gap-3 p-4 sm:p-6'>
+        <p class='text-xs font-semibold uppercase tracking-[0.16em] text-base-content/60'>Your ID</p>
+        <p class='break-all font-mono text-xl font-bold tracking-wide sm:text-2xl'>{text}</p>
+        <p class='text-sm text-base-content/70'>{name ? `People see you as ${name}.` : 'Set a display name so people know it is you.'}</p>
+        <div class='flex flex-wrap gap-2'>
+          <button class='btn btn-primary min-h-11 gap-2' type='button' onClick={copy}>
+            {copied && <Icon name='check' size={16} />}
             {copied ? 'Copied' : 'Copy ID'}
-          </md-filled-button>
+          </button>
           {'share' in navigator && (
-            <md-outlined-button onClick={share}>
-              Share
-            </md-outlined-button>
+            <button class='btn btn-outline min-h-11' type='button' onClick={share}>Share</button>
           )}
         </div>
       </div>
