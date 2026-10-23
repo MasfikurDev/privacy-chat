@@ -11,8 +11,7 @@ export function Avatar({ id, label, size }: { id: string; label: string; size?: 
   const initial = Array.from(label.trim())[0]?.toUpperCase() ?? '?';
   return (
     <span
-      class={size === 'lg' ? 'avatar avatar-lg' : 'avatar'}
-      style={{ background: `hsl(${hue(id)} 45% 36%)` }}
+      class={`avatar grid shrink-0 place-items-center rounded-full font-semibold ${size === 'lg' ? 'size-16 text-xl' : 'size-12 text-base'} avatar-tone-${Math.floor(hue(id) / 60)}`}
       aria-hidden='true'
     >
       {initial}
