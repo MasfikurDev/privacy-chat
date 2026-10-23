@@ -1,0 +1,12 @@
+@import './style.css' layer(legacy);
+@import './mobile-first.css' layer(legacy);
+@import './ui-fixes.css' layer(legacy);
+@import 'tailwindcss';
+@plugin "daisyui";
+
+/*
+ * Migration bridge:
+ * - Existing screens remain in the lower-priority legacy layer for now.
+ * - New screens use Tailwind utilities and daisyUI components.
+ * - Remove legacy imports as each screen is migrated and validated.
+ */
