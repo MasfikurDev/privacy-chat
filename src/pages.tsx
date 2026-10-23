@@ -527,30 +527,41 @@ export function Profile(p: ProfileProps) {
 
 export function Help() {
   return (
-    <section class='card help'>
-      <h2>How Privacy Chat works</h2>
-      <p>
-        Chats, calls and files go straight between the two devices. There is no account and no server holding your
-        messages.
-      </p>
-      <h2>Your ID</h2>
-      <p>
-        Your ID is made from a key created in this browser. When someone contacts you, they prove they own the key
-        behind their ID, and so do you. Nobody can pretend to be an ID they do not hold.
-      </p>
-      <h2>What to know</h2>
-      <ul>
-        <li>Both people need the app open. There is no ringing a closed app and no offline messages.</li>
-        <li>Your ID belongs to this browser. Clearing site data loses it unless you saved a backup.</li>
-        <li>Anyone who learns your ID can send you a request. You choose to accept, decline or block.</li>
-        <li>The person you connect with can see your IP address unless relay-only mode is on.</li>
-        <li>
-          An attacker who controls the public signaling relays and is present from the very first contact could sit in the
-          middle. Chats by invite link are not affected by this when the link is shared privately.
-        </li>
-      </ul>
-      <h2>Trouble connecting?</h2>
-      <p>Open a chat and expand Debug info at the bottom. It shows signaling and connection details you can share.</p>
+    <section class='mx-auto flex w-full max-w-5xl min-w-0 flex-col gap-5'>
+      <div class='space-y-1'>
+        <h2 class='text-2xl font-bold tracking-tight'>How Privacy Chat works</h2>
+        <p class='text-sm text-base-content/70'>Important information about private connections and their limits.</p>
+      </div>
+      <article class='card border border-base-300 bg-base-100 shadow-sm'>
+        <div class='card-body gap-3 p-4 sm:p-6'>
+          <h3 class='text-lg font-bold'>Peer-to-peer messaging</h3>
+          <p class='text-sm leading-6 text-base-content/80'>Chats, calls and files go straight between the two devices. There is no account and no server holding your messages.</p>
+        </div>
+      </article>
+      <article class='card border border-base-300 bg-base-100 shadow-sm'>
+        <div class='card-body gap-3 p-4 sm:p-6'>
+          <h3 class='text-lg font-bold'>Your ID</h3>
+          <p class='text-sm leading-6 text-base-content/80'>Your ID is made from a key created in this browser. When someone contacts you, they prove they own the key behind their ID, and so do you. Nobody can pretend to be an ID they do not hold.</p>
+        </div>
+      </article>
+      <article class='card border border-base-300 bg-base-100 shadow-sm'>
+        <div class='card-body gap-3 p-4 sm:p-6'>
+          <h3 class='text-lg font-bold'>What to know</h3>
+          <ul class='list-disc space-y-2 pl-5 text-sm leading-6 text-base-content/80'>
+            <li>Both people need the app open. There is no ringing a closed app and no offline messages.</li>
+            <li>Your ID belongs to this browser. Clearing site data loses it unless you saved a backup.</li>
+            <li>Anyone who learns your ID can send you a request. You choose to accept, decline or block.</li>
+            <li>The person you connect with can see your IP address unless relay-only mode is on.</li>
+            <li>An attacker who controls the public signaling relays and is present from the very first contact could sit in the middle. Chats by invite link are not affected by this when the link is shared privately.</li>
+          </ul>
+        </div>
+      </article>
+      <article class='card border border-base-300 bg-base-100 shadow-sm'>
+        <div class='card-body gap-2 p-4 sm:p-6'>
+          <h3 class='text-lg font-bold'>Trouble connecting?</h3>
+          <p class='text-sm leading-6 text-base-content/80'>Open a chat and expand Debug info at the bottom. It shows signaling and connection details you can share.</p>
+        </div>
+      </article>
     </section>
   );
 }
