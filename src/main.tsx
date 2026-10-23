@@ -7,6 +7,7 @@ import '@fontsource/roboto/latin-700.css';
 import './material';
 import './style.css';
 import './mobile-first.css';
+import './ui-fixes.css';
 
 render(
   <>
