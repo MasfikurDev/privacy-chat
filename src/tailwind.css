@@ -50,3 +50,11 @@
  * - New screens use Tailwind utilities and daisyUI components.
  * - Remove legacy imports as each screen is migrated and validated.
  */
+
+/* Deterministic avatar colors without inline styles, compatible with strict CSP. */
+.avatar-tone-0 { background-color: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); }
+.avatar-tone-1 { background-color: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); }
+.avatar-tone-2 { background-color: var(--md-sys-color-tertiary-container); color: var(--md-sys-color-on-tertiary-container); }
+.avatar-tone-3 { background-color: var(--md-sys-color-success-container); color: var(--md-sys-color-on-success-container); }
+.avatar-tone-4 { background-color: var(--md-sys-color-error-container); color: var(--md-sys-color-on-error-container); }
+.avatar-tone-5 { background-color: var(--md-sys-color-surface-container-high); color: var(--md-sys-color-on-surface); }
