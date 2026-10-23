@@ -380,21 +380,20 @@ export function Contacts(p: ContactsProps) {
 
 function Toggle(p: { label: string; hint: string; checked: boolean; disabled?: boolean; onChange: (v: boolean) => void }) {
   return (
-    <div class='toggle' data-on={p.checked ? 'true' : 'false'}>
-      <span class='grow toggle-text'>
-        <strong>{p.label}</strong>
-        <span class='muted'>{p.hint}</span>
+    <label class='flex min-w-0 items-start justify-between gap-4 border-b border-base-300 py-4 last:border-b-0'>
+      <span class='flex min-w-0 flex-col gap-1'>
+        <strong class='font-semibold'>{p.label}</strong>
+        <span class='text-sm leading-5 text-base-content/70'>{p.hint}</span>
       </span>
-      <span class='toggle-control'>
-        <md-switch
-          class='toggle-switch'
-          selected={p.checked}
-          disabled={p.disabled}
-          aria-label={p.label}
-          onChange={(e) => p.onChange(e.currentTarget.selected)}
-        />
-      </span>
-    </div>
+      <input
+        type='checkbox'
+        class='toggle toggle-primary mt-1 shrink-0'
+        checked={p.checked}
+        disabled={p.disabled}
+        aria-label={p.label}
+        onChange={(e) => p.onChange(e.currentTarget.checked)}
+      />
+    </label>
   );
 }
 
@@ -442,86 +441,87 @@ export function Profile(p: ProfileProps) {
   };
 
   return (
-    <>
+    <div class='mx-auto flex w-full max-w-5xl min-w-0 flex-col gap-5'>
       <IdCard identity={p.identity} name={p.name} />
 
-      <section class='card profile-name'>
-        <h2>Display name</h2>
-        <div class='profile-name-inner'>
-          <form class='row' onSubmit={save}>
-            <md-outlined-text-field
-              class='grow'
-              label='Display name'
+      <section class='card border border-base-300 bg-base-100 shadow-sm'>
+        <div class='card-body gap-4 p-4 sm:p-6'>
+          <div class='space-y-1'>
+            <h2 class='text-xl font-bold'>Display name</h2>
+            <p class='text-sm text-base-content/70'>Choose the name other people see when you contact them.</p>
+          </div>
+          <form class='flex min-w-0 flex-col gap-3 sm:flex-row' onSubmit={save}>
+            <input
+              class='input input-bordered min-h-12 w-full sm:flex-1'
               aria-label='Display name'
+              placeholder='Display name'
               value={draft}
               maxLength={32}
               onInput={(e) => setDraft(e.currentTarget.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  save(e as unknown as Event);
-                }
-              }}
             />
-            <md-filled-button onClick={submitForm}>{saved ? 'Saved' : 'Save'}</md-filled-button>
+            <button class='btn btn-primary min-h-12 w-full sm:w-auto' type='submit'>{saved ? 'Saved' : 'Save'}</button>
           </form>
         </div>
       </section>
 
-      <section class='card profile-privacy'>
-        <h2>Privacy</h2>
-        <Toggle
-          label='Appear online'
-          hint='Lets people reach you with your ID while the app is open.'
-          checked={p.online}
-          onChange={p.onOnline}
-        />
-        <Toggle
-          label='Hide my IP (relay only)'
-          hint={
-            HAS_TURN
-              ? 'Routes connections through a TURN relay.'
-              : 'Unavailable: no TURN server is configured, so this setting is ignored.'
-          }
-          checked={p.relayOnly && HAS_TURN}
-          disabled={!HAS_TURN}
-          onChange={p.onRelayOnly}
-        />
-      </section>
-
-      <section class='card profile-help'>
-        <div class='profile-help-copy'>
-          <h2>Help & privacy</h2>
-          <p class='muted'>How peer-to-peer connections work, what stays on this device, and what the network can see.</p>
-        </div>
-        <md-outlined-button onClick={p.onHelp}>
-          <Icon name='help' size={18} slot='icon' />
-          Open help
-        </md-outlined-button>
-      </section>
-
-      <section class='card profile-backup'>
-        <h2>Backup</h2>
-        <p class='muted'>
-          Your ID lives in this browser. Save a backup file to restore it elsewhere. The file contains your private key, so
-          keep it secret.
-        </p>
-        <div class='row profile-backup-actions'>
-          <md-outlined-button onClick={download}>
-            <Icon name='download' size={16} slot='icon' />
-            Export backup
-          </md-outlined-button>
-          <label class='file-btn'>
-            Import backup
-            <input type='file' accept='application/json,.json' onChange={onFile} />
-          </label>
-          <md-text-button class='btn-danger' onClick={reset}>
-            <Icon name='alert' size={16} slot='icon' />
-            New ID
-          </md-text-button>
+      <section class='card border border-base-300 bg-base-100 shadow-sm'>
+        <div class='card-body gap-1 p-4 sm:p-6'>
+          <div class='mb-1 space-y-1'>
+            <h2 class='text-xl font-bold'>Privacy</h2>
+            <p class='text-sm text-base-content/70'>Control when people can reach you and how connections are routed.</p>
+          </div>
+          <Toggle
+            label='Appear online'
+            hint='Lets people reach you with your ID while the app is open.'
+            checked={p.online}
+            onChange={p.onOnline}
+          />
+          <Toggle
+            label='Hide my IP (relay only)'
+            hint={HAS_TURN ? 'Routes connections through a TURN relay.' : 'Unavailable: no TURN server is configured, so this setting is ignored.'}
+            checked={p.relayOnly && HAS_TURN}
+            disabled={!HAS_TURN}
+            onChange={p.onRelayOnly}
+          />
         </div>
       </section>
-    </>
+
+      <section class='card border border-base-300 bg-base-100 shadow-sm'>
+        <div class='card-body flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-6'>
+          <div class='min-w-0 space-y-1'>
+            <h2 class='text-xl font-bold'>Help & privacy</h2>
+            <p class='text-sm text-base-content/70'>How peer-to-peer connections work, what stays on this device, and what the network can see.</p>
+          </div>
+          <button class='btn btn-outline min-h-11 shrink-0 gap-2' type='button' onClick={p.onHelp}>
+            <Icon name='help' size={18} />
+            Open help
+          </button>
+        </div>
+      </section>
+
+      <section class='card border border-base-300 bg-base-100 shadow-sm'>
+        <div class='card-body gap-4 p-4 sm:p-6'>
+          <div class='space-y-1'>
+            <h2 class='text-xl font-bold'>Backup</h2>
+            <p class='text-sm leading-6 text-base-content/70'>Your ID lives in this browser. Save a backup file to restore it elsewhere. The file contains your private key, so keep it secret.</p>
+          </div>
+          <div class='flex flex-col gap-2 sm:flex-row sm:flex-wrap'>
+            <button class='btn btn-outline min-h-11 gap-2' type='button' onClick={download}>
+              <Icon name='download' size={16} />
+              Export backup
+            </button>
+            <label class='btn btn-outline min-h-11 cursor-pointer'>
+              Import backup
+              <input class='sr-only' type='file' accept='application/json,.json' onChange={onFile} />
+            </label>
+            <button class='btn btn-ghost btn-error min-h-11 gap-2' type='button' onClick={reset}>
+              <Icon name='alert' size={16} />
+              New ID
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
   );
 }
 
