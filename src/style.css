@@ -591,6 +591,26 @@ md-text-button.btn-danger {
   font-size: var(--md-sys-typescale-title-medium-size);
 }
 
+.avatar-tone-0 {
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+}
+
+.avatar-tone-1 {
+  background: var(--md-sys-color-secondary);
+  color: var(--md-sys-color-on-secondary);
+}
+
+.avatar-tone-2 {
+  background: var(--md-sys-color-tertiary);
+  color: var(--md-sys-color-on-tertiary);
+}
+
+.avatar-tone-3 {
+  background: var(--md-sys-color-error);
+  color: var(--md-sys-color-on-error);
+}
+
 .avatar-lg {
   width: 4.5rem;
   height: 4.5rem;
