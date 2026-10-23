@@ -27,13 +27,13 @@ type Screen = 'chats' | 'contacts' | 'profile' | 'help';
 const TABS: [Screen, string, IconName][] = [
   ['chats', 'Chats', 'message'],
   ['contacts', 'Contacts', 'users'],
-  ['profile', 'Profile', 'user'],
+  ['profile', 'Settings', 'user'],
 ];
 
 const SCREEN_TITLES: Record<Screen, string> = {
   chats: 'Chats',
   contacts: 'Contacts',
-  profile: 'Profile',
+  profile: 'Settings',
   help: 'Help'
 };
 
