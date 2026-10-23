@@ -6,6 +6,7 @@ import '@fontsource/roboto/latin-500.css';
 import '@fontsource/roboto/latin-700.css';
 import './material';
 import './style.css';
+import './mobile-first.css';
 
 render(
   <>
