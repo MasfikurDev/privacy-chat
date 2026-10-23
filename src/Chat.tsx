@@ -354,12 +354,12 @@ export function Chat({ secret, peer, relayOnly, saved, onSave, onLeave }: ChatPr
       </Modal>
       {callError && <div role='alert' class='alert alert-error text-sm'>{callError}</div>}
 
-      <div class='relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-base-300 bg-base-100'>
+      <div class='msgs-wrap relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-base-300 bg-base-100'>
         <div class='flex max-h-[30dvh] gap-2 overflow-auto p-2 empty:hidden'>
           <video ref={remoteVideo} class='max-h-[26dvh] max-w-full rounded-xl bg-base-200 object-contain' autoPlay playsInline hidden={!remoteStream} />
           <video ref={localVideo} class='max-h-[26dvh] max-w-full rounded-xl bg-base-200 object-contain' autoPlay playsInline muted hidden={!localStream} />
         </div>
-        <ul class='flex min-h-0 flex-1 flex-col gap-2 overflow-x-hidden overflow-y-auto p-3 sm:p-4' role='log' aria-live='polite' ref={msgsRef} onScroll={onScroll}>
+        <ul class='msgs msgs-scroll flex min-h-0 flex-1 flex-col gap-2 overflow-x-hidden overflow-y-auto p-3 sm:p-4' role='log' aria-live='polite' ref={msgsRef} onScroll={onScroll}>
           {msgs.length === 0 && (
             <li class='m-auto flex max-w-sm flex-col items-center gap-2 py-10 text-center text-base-content/60' aria-hidden='true'>
               <span class='grid size-12 place-items-center rounded-2xl bg-primary/10 text-2xl text-primary'>✳</span>
@@ -373,9 +373,9 @@ export function Chat({ secret, peer, relayOnly, saved, onSave, onLeave }: ChatPr
             return (
               <Fragment key={m.id}>
                 {sep && <li class='my-2 text-center text-xs text-base-content/60'>{sep}</li>}
-                <li class={`max-w-[88%] whitespace-pre-wrap break-words rounded-2xl px-3 py-2 shadow-sm sm:max-w-[75%] ${m.mine ? 'ml-auto rounded-br-md bg-primary text-primary-content' : 'mr-auto rounded-bl-md bg-base-200 text-base-content'}`}>
+                <li class={`${m.mine ? 'mine ml-auto rounded-br-md bg-primary text-primary-content' : 'theirs mr-auto rounded-bl-md bg-base-200 text-base-content'} msg max-w-[88%] whitespace-pre-wrap break-words rounded-2xl px-3 py-2 shadow-sm sm:max-w-[75%]`}>
                   <span>{m.text}</span>
-                  <time class='block pt-1 text-right text-[0.65rem] opacity-70' dateTime={new Date(m.at).toISOString()}>
+                  <time class='msg-time block pt-1 text-right text-[0.65rem] opacity-70' dateTime={new Date(m.at).toISOString()}>
                     {new Date(m.at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
                   </time>
                 </li>
@@ -391,7 +391,7 @@ export function Chat({ secret, peer, relayOnly, saved, onSave, onLeave }: ChatPr
         )}
       </div>
 
-      <form class='grid min-w-0 grid-cols-[2.75rem_minmax(0,1fr)_auto] items-end gap-2 border-t border-base-300 pt-3' onSubmit={send}>
+      <form class='composer grid min-w-0 grid-cols-[2.75rem_minmax(0,1fr)_auto] items-end gap-2 border-t border-base-300 pt-3' onSubmit={send}>
         <button class='btn btn-ghost btn-circle btn-sm mb-1' type='button' aria-label='Send a file' onClick={() => fileInputRef.current?.click()}>
           <Icon name='paperclip' />
         </button>
